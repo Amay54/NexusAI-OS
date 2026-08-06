@@ -24,10 +24,10 @@ class QdrantLongTermMemory(BaseLongTermMemoryProvider):
         for doc in self.documents:
             doc_words = set(re.findall(r"\w+", doc.content.lower()))
             intersection = query_words.intersection(doc_words)
-            union = query_words.union(doc_words)
-            similarity = len(intersection) / max(len(union), 1)
 
-            if similarity > 0.05:
+            # Match if any query tokens intersect with doc tokens
+            if intersection:
+                similarity = len(intersection) / max(len(query_words), 1)
                 results.append(MemoryItem(id=doc.id, content=doc.content, metadata=doc.metadata, score=round(similarity, 4)))
 
         results.sort(key=lambda x: x.score, reverse=True)
