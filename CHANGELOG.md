@@ -5,16 +5,19 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.0] - Official Public Release - 2026-08-06
+
+### Added
+- **Production Audit & Security Policy (`docs/audit_report.md`, `SECURITY.md`)**: Complete architectural audit report, security policy, and vulnerability reporting procedures.
+- **Open Source Governance Suite (`CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `LICENSE`)**: Contributor Covenant v2.1 code of conduct, contribution guidelines, and official MIT License.
+- **CI/CD Integration (`.github/workflows/ci.yml`)**: Automated GitHub Actions integration pipeline running unit, integration, and performance benchmark suites on every push and PR.
+- **Demonstration & Presentation Guide (`docs/demo_guide.md`)**: Step-by-step presentation scripts, recommended demonstration prompts, and video keyframes.
+- **Production Benchmark Verification (`docs/benchmarks/benchmark_report.md`)**: Empirical performance metrics for workflow execution, context retrieval, vector search, and API throughput.
+
 ## [v0.4.0] - Master Production Release - 2026-08-06
 
 ### Added
-- **Production End-to-End Project Synthesizer (`nexusai/services/project_synthesizer.py`)**: Complete real multi-file codebase synthesizer (FastAPI, PostgreSQL schema, Pytest test suits, Dockerfile, docker-compose.yml, README, ADRs) verified inside execution sandbox.
-- **Built-In Demo Workflows Engine (`nexusai/services/demo_workflows.py`)**: 5 pre-configured demonstration workflows (Inventory System, Blog API, CRM Backend, Auth Microservice, REST API).
-- **Real-Time WebSocket Telemetry Bus (`nexusai/api/websocket_api.py`)**: `/ws/telemetry` endpoint streaming real-time agent execution logs, workflow progress, tool invocations, and artifact events to the dashboard.
-- **Production React 18 OS Dashboard (`frontend/`)**: Modern UI featuring Executive Dashboard, Organization Board, Live Timeline, Tool Activity Feed, Memory & Knowledge Graph Visualizer, Digital Twin Viewer, and Artifact Explorer.
-- **Docker Compose Stack & Observability (`docker-compose.yml`, `prometheus.yml`)**: Production containerization stack including FastAPI, PostgreSQL, Redis, Qdrant, Prometheus, and Grafana.
-- **Production Documentation Suite (`docs/`)**: Architecture guide, Deployment guide, Developer guide, API documentation, Troubleshooting, and Contribution guidelines.
-- **Production Test Suite (`tests/test_v0_4_0_production.py`)**: 4 new end-to-end integration tests verifying synthesis, demo execution, WebSockets, and control plane endpoints (40/40 tests passing).
+- Real multi-file codebase synthesizer, 5 built-in demo workflows, real-time WebSockets telemetry bus (`/ws/telemetry`), React 18 OS Dashboard template, Docker Compose stack, and comprehensive documentation suite.
 
 ## [v0.3.3] - Explainable Executive Intelligence & Digital Twin Release - 2026-08-06
 

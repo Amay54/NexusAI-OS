@@ -1,5 +1,5 @@
 """
-NexusAI OS FastAPI Production Control Plane Entrypoint (v0.4.0).
+NexusAI OS FastAPI Production Control Plane Entrypoint (v0.5.0 Public Release).
 Registers Auth, Workflows, MCP Tools, Memory, Explainability, Knowledge Graph, Reflection, History, Snapshots, Observability,
 Workforce, Dynamic Org, Executive Intelligence, WebSockets Telemetry, and Built-In Demo Workflows.
 """
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description="NexusAI OS Enterprise Autonomous AI Operating System Control Plane",
-    version="0.4.0",
+    version="0.5.0",
     lifespan=lifespan
 )
 
@@ -68,7 +68,7 @@ async def health_check():
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,
-        "version": "0.4.0",
+        "version": "0.5.0",
         "default_llm_provider": settings.DEFAULT_LLM_PROVIDER,
         "hitl_enabled": settings.ENABLE_HITL_APPROVAL
     }

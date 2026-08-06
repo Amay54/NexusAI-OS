@@ -1,5 +1,5 @@
 """
-Master Production Release Test Suite for NexusAI OS (v0.4.0).
+Master Production Release Test Suite for NexusAI OS (v0.5.0 Public Release).
 Verifies End-to-End Project Synthesis, Sandbox Test Execution, Demo Workflows Engine, WebSocket Telemetry Manager, and FastAPI Control Plane.
 """
 import pytest
@@ -43,19 +43,18 @@ async def test_built_in_demo_workflows_engine():
 @pytest.mark.asyncio
 async def test_websocket_telemetry_manager():
     """Test WebSocket connection manager broadcast capabilities."""
-    # Verify manager initialization
     assert hasattr(ws_manager, "broadcast")
     await ws_manager.broadcast({"event_type": "TEST_EVENT", "status": "OK"})
 
 
 @pytest.mark.asyncio
-async def test_v0_4_0_production_rest_apis():
+async def test_v0_5_0_production_rest_apis():
     """Test FastAPI production endpoints."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # 1. Health check
         health_res = await client.get("/health")
         assert health_res.status_code == 200
-        assert health_res.json()["version"] == "0.4.0"
+        assert health_res.json()["version"] == "0.5.0"
 
         # 2. List demo workflows
         demo_res = await client.get("/api/v1/demo/workflows")
