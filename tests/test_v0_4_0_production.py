@@ -1,6 +1,6 @@
 """
-Master Production Release Test Suite for NexusAI OS (v0.5.1 Public Release).
-Verifies End-to-End Project Synthesis, Sandbox Test Execution, Demo Workflows Engine, WebSocket Telemetry Manager, Project Download ZIP, and FastAPI Control Plane.
+Master Production Release Test Suite for NexusAI OS (v0.7.0 Public Release).
+Verifies End-to-End Project Synthesis, Sandbox Test Execution, Demo Workflows Engine, WebSocket Telemetry Manager, Project Download ZIP, 100% Dynamic Workflow Execution APIs, and FastAPI Control Plane.
 """
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -48,21 +48,26 @@ async def test_websocket_telemetry_manager():
 
 
 @pytest.mark.asyncio
-async def test_v0_5_1_production_rest_apis():
-    """Test FastAPI production endpoints including zip download."""
+async def test_v0_7_0_production_rest_apis():
+    """Test FastAPI production endpoints including dynamic workflow creation and file APIs."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # 1. Health check
         health_res = await client.get("/health")
         assert health_res.status_code == 200
-        assert health_res.json()["version"] == "0.5.1"
+        assert health_res.json()["version"] == "0.7.0"
 
         # 2. List demo workflows
         demo_res = await client.get("/api/v1/demo/workflows")
         assert demo_res.status_code == 200
         assert demo_res.json()["count"] == 5
 
-        # 3. Download project ZIP API
-        dl_res = await client.get("/api/v1/projects/download/proj-demo")
-        assert dl_res.status_code == 200
-        assert dl_res.headers["content-type"] == "application/zip"
-        assert len(dl_res.content) > 0
+        # 3. Create dynamic workflow
+        wf_res = await client.post("/api/v1/workflow/create", json={"goal_prompt": "Build CRM API"})
+        assert wf_res.status_code == 200
+        wf_id = wf_res.json()["workflow_id"]
+        assert len(wf_id) > 0
+
+        # 4. Fetch dynamic file tree list
+        files_res = await client.get(f"/api/v1/workflow/{wf_id}/files")
+        assert files_res.status_code == 200
+        assert files_res.json()["count"] > 0

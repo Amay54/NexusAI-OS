@@ -5,6 +5,16 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.7.0] - AI-Powered Multi-Framework Code Synthesizer Release - 2026-08-06
+
+### Fixed
+- **Single-Template Bug Fix (`nexusai/services/project_synthesizer.py`)**: Fixed critical issue where synthesizer returned a fixed FastAPI template regardless of prompt parameters.
+
+### Added
+- **Multi-Framework AI Code Synthesizer (`nexusai/services/project_synthesizer.py`)**: Parses goal prompt to detect requested framework (`Flask`, `React`, `Django`, `FastAPI`, `Express`), database (`SQLite`, `PostgreSQL`, `MongoDB`, `MySQL`), domain (`Weather`, `Todo`, `CRM`, `Blog`), and language (`Python`, `JavaScript`).
+- **Framework-Matching Quality Gate (`nexusai/services/project_synthesizer.py`)**: Asserts that synthesized project files match requested framework rules, raising `ValueError` if a mismatch is detected.
+- **Multi-Framework Synthesis Test Suite (`tests/test_multi_framework_synthesis.py`)**: 5 new test cases verifying Flask Weather API + SQLite, React Todo App + Vite, FastAPI CRM Backend + PostgreSQL, and Django Blog synthesis.
+
 ## [v0.6.0] - 100% Dynamic Backend-Driven Frontend & Artifact Service Release - 2026-08-06
 
 ### Added
@@ -18,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GET /api/v1/workflow/{id}/summary`: Returns real execution summary metrics.
   - `GET /api/v1/workflow/{id}/artifacts`: Returns documentation & Docker artifacts.
   - `GET /api/v1/workflow/{id}/download`: Serves ZIP archive of the specific workflow files.
-- **ChatGPT-Style Multiline Prompt Hero**: Multiline prompt textarea with `Enter` (submit) / `Shift+Enter` (newline) support and prompt history.
 
 ## [v0.5.1] - Results Workspace & Project File Explorer Release - 2026-08-06
 
