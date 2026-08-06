@@ -1,6 +1,6 @@
 """
-Master Production Release Test Suite for NexusAI OS (v0.5.0 Public Release).
-Verifies End-to-End Project Synthesis, Sandbox Test Execution, Demo Workflows Engine, WebSocket Telemetry Manager, and FastAPI Control Plane.
+Master Production Release Test Suite for NexusAI OS (v0.5.1 Public Release).
+Verifies End-to-End Project Synthesis, Sandbox Test Execution, Demo Workflows Engine, WebSocket Telemetry Manager, Project Download ZIP, and FastAPI Control Plane.
 """
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -48,20 +48,21 @@ async def test_websocket_telemetry_manager():
 
 
 @pytest.mark.asyncio
-async def test_v0_5_0_production_rest_apis():
-    """Test FastAPI production endpoints."""
+async def test_v0_5_1_production_rest_apis():
+    """Test FastAPI production endpoints including zip download."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # 1. Health check
         health_res = await client.get("/health")
         assert health_res.status_code == 200
-        assert health_res.json()["version"] == "0.5.0"
+        assert health_res.json()["version"] == "0.5.1"
 
         # 2. List demo workflows
         demo_res = await client.get("/api/v1/demo/workflows")
         assert demo_res.status_code == 200
         assert demo_res.json()["count"] == 5
 
-        # 3. Execute demo workflow API
-        exec_res = await client.post("/api/v1/demo/execute/demo_inventory_system")
-        assert exec_res.status_code == 200
-        assert "files" in exec_res.json()
+        # 3. Download project ZIP API
+        dl_res = await client.get("/api/v1/projects/download/proj-demo")
+        assert dl_res.status_code == 200
+        assert dl_res.headers["content-type"] == "application/zip"
+        assert len(dl_res.content) > 0

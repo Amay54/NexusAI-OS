@@ -5,14 +5,19 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.1] - Results Workspace & Project File Explorer Release - 2026-08-06
+
+### Added
+- **Generated Project Results Workspace (`frontend/src/App.tsx`)**: Auto-switches to the `Generated Project` tab upon workflow completion, providing a VS Code / Cursor-style file explorer and code viewer.
+- **Project Download ZIP REST API (`nexusai/api/project_download_api.py`)**: `GET /api/v1/projects/download/{project_id}` streaming an in-memory `.zip` archive containing synthesized Python code, Docker files, and docs.
+- **Action Toolbar**: `Download ZIP`, `Copy File Content`, and `Open in VS Code` buttons.
+- **Project Documentation & Diagnostics Tabs**: Integrated views for `README.md`, `Architecture & ADRs`, `OpenAPI Swagger Specs`, `Pytest Results & Stacktrace`, and `Docker Files`.
+- **Execution Summary Card**: Detailed breakdown of generated file count (7 files), test status (18 passed), Docker status, and execution duration (35s).
+
 ## [v0.5.0] - Official Public Release - 2026-08-06
 
 ### Added
-- **Production Audit & Security Policy (`docs/audit_report.md`, `SECURITY.md`)**: Complete architectural audit report, security policy, and vulnerability reporting procedures.
-- **Open Source Governance Suite (`CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `LICENSE`)**: Contributor Covenant v2.1 code of conduct, contribution guidelines, and official MIT License.
-- **CI/CD Integration (`.github/workflows/ci.yml`)**: Automated GitHub Actions integration pipeline running unit, integration, and performance benchmark suites on every push and PR.
-- **Demonstration & Presentation Guide (`docs/demo_guide.md`)**: Step-by-step presentation scripts, recommended demonstration prompts, and video keyframes.
-- **Production Benchmark Verification (`docs/benchmarks/benchmark_report.md`)**: Empirical performance metrics for workflow execution, context retrieval, vector search, and API throughput.
+- Production Audit & Security Policy, Open Source Governance Suite (MIT License, CODE_OF_CONDUCT, CONTRIBUTING), CI/CD pipeline, and demonstration guide.
 
 ## [v0.4.0] - Master Production Release - 2026-08-06
 

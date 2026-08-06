@@ -1,7 +1,7 @@
 """
-NexusAI OS FastAPI Production Control Plane Entrypoint (v0.5.0 Public Release).
+NexusAI OS FastAPI Production Control Plane Entrypoint (v0.5.1).
 Registers Auth, Workflows, MCP Tools, Memory, Explainability, Knowledge Graph, Reflection, History, Snapshots, Observability,
-Workforce, Dynamic Org, Executive Intelligence, WebSockets Telemetry, Built-In Demo Workflows, and Hosts the Production React OS Dashboard.
+Workforce, Dynamic Org, Executive Intelligence, WebSockets Telemetry, Built-In Demo Workflows, Project Download, and Hosts the Production React OS Dashboard.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -22,6 +22,7 @@ from nexusai.api.executive_api import executive_router
 from nexusai.api.executive_explainability_api import explainability_router
 from nexusai.api.websocket_api import ws_router
 from nexusai.api.demo_api import demo_router
+from nexusai.api.project_download_api import download_router
 from nexusai.mcp.engine import discovery_engine
 
 
@@ -35,7 +36,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description="NexusAI OS Enterprise Autonomous AI Operating System Control Plane",
-    version="0.5.0",
+    version="0.5.1",
     lifespan=lifespan
 )
 
@@ -61,6 +62,7 @@ app.include_router(org_router, prefix="/api/v1")
 app.include_router(executive_router, prefix="/api/v1")
 app.include_router(explainability_router, prefix="/api/v1")
 app.include_router(demo_router, prefix="/api/v1")
+app.include_router(download_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 
@@ -69,7 +71,7 @@ async def health_check():
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,
-        "version": "0.5.0",
+        "version": "0.5.1",
         "default_llm_provider": settings.DEFAULT_LLM_PROVIDER,
         "hitl_enabled": settings.ENABLE_HITL_APPROVAL
     }
