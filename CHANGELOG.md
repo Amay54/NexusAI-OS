@@ -5,14 +5,26 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] - 100% Dynamic Backend-Driven Frontend & Artifact Service Release - 2026-08-06
+
+### Added
+- **100% Backend-Driven React OS Dashboard (`frontend/src/App.tsx`)**: Completely eliminated all static demonstration arrays and code snippets. File explorer trees and file contents are dynamically fetched from the backend API.
+- **Workflow & Artifact Store Service (`nexusai/services/workflow_store.py`)**: Stores dynamically synthesized project artifacts and summaries keyed by unique `workflow_id`.
+- **Dynamic Workflow Execution REST APIs (`nexusai/api/workflow_execution_api.py`)**:
+  - `POST /api/v1/workflow/create`: Starts workflow for prompt, returns `workflow_id`.
+  - `GET /api/v1/workflow/{id}`: Returns workflow status and active agent states.
+  - `GET /api/v1/workflow/{id}/files`: Returns dynamic file list tree.
+  - `GET /api/v1/workflow/{id}/file/{path:path}`: Returns exact raw content of requested file path on-demand.
+  - `GET /api/v1/workflow/{id}/summary`: Returns real execution summary metrics.
+  - `GET /api/v1/workflow/{id}/artifacts`: Returns documentation & Docker artifacts.
+  - `GET /api/v1/workflow/{id}/download`: Serves ZIP archive of the specific workflow files.
+- **ChatGPT-Style Multiline Prompt Hero**: Multiline prompt textarea with `Enter` (submit) / `Shift+Enter` (newline) support and prompt history.
+
 ## [v0.5.1] - Results Workspace & Project File Explorer Release - 2026-08-06
 
 ### Added
 - **Generated Project Results Workspace (`frontend/src/App.tsx`)**: Auto-switches to the `Generated Project` tab upon workflow completion, providing a VS Code / Cursor-style file explorer and code viewer.
 - **Project Download ZIP REST API (`nexusai/api/project_download_api.py`)**: `GET /api/v1/projects/download/{project_id}` streaming an in-memory `.zip` archive containing synthesized Python code, Docker files, and docs.
-- **Action Toolbar**: `Download ZIP`, `Copy File Content`, and `Open in VS Code` buttons.
-- **Project Documentation & Diagnostics Tabs**: Integrated views for `README.md`, `Architecture & ADRs`, `OpenAPI Swagger Specs`, `Pytest Results & Stacktrace`, and `Docker Files`.
-- **Execution Summary Card**: Detailed breakdown of generated file count (7 files), test status (18 passed), Docker status, and execution duration (35s).
 
 ## [v0.5.0] - Official Public Release - 2026-08-06
 
