@@ -39,7 +39,7 @@
        v                                v                                v
 +------+-----------------+    +---------+----------------+   +-----------+----------------+
 | Multi-Layer Memory     |    | Knowledge Graph Engine   |   | Isolated Execution Sandbox |
-| Short-Term: Redis      |    | Relational Topology    |   | Isolated Python, Node,     |
+| Short-Term: Redis      |    | Generic Topology Layer |   | Isolated Python, Node,     |
 | Working: PostgreSQL    |    | Projects -> Tasks ->     |   | Shell Container Sandbox    |
 | Long-Term: Qdrant      |    | Files -> Deployments     |   +----------------------------+
 +------------------------+    +--------------------------+
@@ -49,9 +49,9 @@
 
 1. **100% Free & Open-Source LLM Stack**: Zero paid LLM APIs required. Dynamic task-based routing across **Gemini 2.5 Flash Free Tier**, **DeepSeek Coder**, **Qwen 3**, and local **Ollama** (Llama 3/Mistral/Phi).
 2. **Event-Driven Agent Communication**: Agents communicate exclusively through an asynchronous Event Bus supporting Pub/Sub, correlation IDs, Dead Letter Queues (DLQ), and execution replay.
-3. **Model Context Protocol (MCP) First**: Extensible plugin architecture supporting 14 integrations (Filesystem, Terminal, Docker, PostgreSQL, GitHub, Jira, Slack, Gmail, Google Calendar, Notion, Git, Playwright, Kubernetes).
-4. **Multi-Layer Memory System**: Ephemeral Redis cache, PostgreSQL working memory, and Qdrant semantic long-term memory for experience retrieval.
-5. **Knowledge Graph Topology Engine**: Queryable relational graph linking Projects -> Tasks -> Repositories -> Deployments -> APIs.
+3. **Provider-Agnostic Memory System**: Clean abstract interfaces for Short-Term (Redis), Working (PostgreSQL), and Long-Term Semantic Memory (Qdrant Vector Engine) with caching, TTL support, and graceful local fallback.
+4. **Generic Knowledge Graph Engine**: Relational topology mapping Projects -> Tasks -> Repositories -> Deployments -> APIs, queryable by agents through an abstract provider layer.
+5. **Model Context Protocol (MCP) First**: Extensible plugin architecture supporting 14 integrations (Filesystem, Terminal, Docker, PostgreSQL, GitHub, Jira, Slack, Gmail, Google Calendar, Notion, Git, Playwright, Kubernetes).
 6. **Code Sandbox Engine**: Code execution isolated inside ephemeral sandbox containers with strict timeout and resource caps.
 7. **Human-in-the-Loop (HITL) Checkpoints**: Safety engine tagging destructive terminal commands, migrations, or force pushes for human reviewer approval.
 
