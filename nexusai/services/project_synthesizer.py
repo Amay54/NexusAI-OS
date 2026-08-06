@@ -72,20 +72,55 @@ class ProductionProjectArtifact(BaseModel):
 class ProductionProjectSynthesizer:
     """100% LLM-Driven Codebase Synthesizer with Full Execution Trace and Fail-Fast Policy."""
 
+    @staticmethod
+    def _extract_negative_frameworks(p_lower: str) -> set:
+        """
+        Detect frameworks explicitly excluded by the user.
+        Examples: 'do not use flask', 'no flask', 'without flask', 'not fastapi'
+        Returns a set of excluded framework names (lowercase).
+        """
+        excluded = set()
+        patterns = [
+            ("flask",   ["do not use flask", "don't use flask", "no flask", "without flask", "not flask", "avoid flask"]),
+            ("fastapi", ["do not use fastapi", "don't use fastapi", "no fastapi", "without fastapi", "not fastapi", "avoid fastapi"]),
+            ("django",  ["do not use django", "don't use django", "no django"]),
+            ("react",   ["do not use react", "don't use react", "no react"]),
+        ]
+        for framework, triggers in patterns:
+            if any(t in p_lower for t in triggers):
+                excluded.add(framework)
+        return excluded
+
     def parse_spec_from_prompt(self, project_name: str, prompt: str) -> ProjectSpec:
         """Extracts target framework, database, domain, and language from the prompt."""
         p_lower = prompt.lower()
 
-        if "flask" in p_lower:
+        # ── Step 1: Detect negative constraints (must run before positive matching) ──
+        negated = self._extract_negative_frameworks(p_lower)
+        print(f"[DECISION TREE] Negative constraints detected: {negated or 'none'}")
+
+        # ── Step 2: Positive framework detection (skip negated frameworks) ──
+        if "flask" in p_lower and "flask" not in negated:
             framework = "flask"
-        elif "react" in p_lower:
+            reason = "'flask' found in prompt and NOT in negative constraints"
+        elif "react" in p_lower and "react" not in negated:
             framework = "react"
-        elif "django" in p_lower:
+            reason = "'react' found in prompt and NOT in negative constraints"
+        elif "django" in p_lower and "django" not in negated:
             framework = "django"
-        elif "cli" in p_lower or "calculator" in p_lower or "command" in p_lower or "script" in p_lower:
+            reason = "'django' found in prompt and NOT in negative constraints"
+        elif any(kw in p_lower for kw in ["cli", "calculator", "argparse", "command-line", "command line", "script"]):
             framework = "cli"
+            reason = f"CLI keyword found in prompt (cli/calculator/argparse/command-line)"
+        elif "fastapi" in p_lower and "fastapi" not in negated:
+            framework = "fastapi"
+            reason = "'fastapi' found in prompt and NOT in negative constraints"
         else:
             framework = "fastapi"
+            reason = "No specific framework keyword found — defaulting to fastapi"
+
+        print(f"[DECISION TREE] Framework selected: '{framework}' — Reason: {reason}")
+
 
         if "sqlite" in p_lower:
             database = "sqlite"

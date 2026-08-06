@@ -162,9 +162,23 @@ class MockDevLLMProvider(BaseLLMProvider):
         # Extract a readable project title from the prompt
         project_title = prompt.split("User Goal:")[-1].split("\n")[0].strip() if "User Goal:" in prompt else prompt[:60].strip()
 
+        # Detect negative framework constraints ("do not use flask", "no fastapi", etc.)
+        # This MUST run before the positive if/elif chain to prevent false matches
+        negated = set()
+        neg_patterns = [
+            ("flask",   ["do not use flask", "don't use flask", "no flask", "without flask", "not flask", "avoid flask"]),
+            ("fastapi", ["do not use fastapi", "don't use fastapi", "no fastapi", "without fastapi", "not fastapi", "avoid fastapi"]),
+            ("django",  ["do not use django", "don't use django", "no django"]),
+            ("react",   ["do not use react", "don't use react", "no react"]),
+        ]
+        for fw, triggers in neg_patterns:
+            if any(t in p_lower for t in triggers):
+                negated.add(fw)
+        logger.debug(f"MockDevLLMProvider — negated frameworks: {negated}")
+
         # If system prompt requests structured JSON code synthesis:
         if "json" in sys_lower or "files" in sys_lower:
-            if "flask" in p_lower:
+            if "flask" in p_lower and "flask" not in negated:
                 return json.dumps({
                     "project_name": project_title or "FlaskApp",
                     "framework": "flask",
@@ -177,7 +191,7 @@ class MockDevLLMProvider(BaseLLMProvider):
                         "README.md": f"# {project_title}\n\nFramework: Flask\n"
                     }
                 })
-            elif "react" in p_lower:
+            elif "react" in p_lower and "react" not in negated:
                 return json.dumps({
                     "project_name": "ReactTodoApp",
                     "framework": "react",
@@ -190,7 +204,7 @@ class MockDevLLMProvider(BaseLLMProvider):
                         "README.md": "# React Todo App\n"
                     }
                 })
-            elif "django" in p_lower:
+            elif "django" in p_lower and "django" not in negated:
                 return json.dumps({
                     "project_name": "DjangoBlog",
                     "framework": "django",
@@ -203,7 +217,7 @@ class MockDevLLMProvider(BaseLLMProvider):
                         "README.md": "# Django Blog\n"
                     }
                 })
-            elif any(kw in p_lower for kw in ["cli", "calculator", "command", "script", "command-line"]):
+            elif any(kw in p_lower for kw in ["cli", "calculator", "argparse", "command-line", "command line", "script"]):
                 return json.dumps({
                     "project_name": project_title or "PythonCLI",
                     "framework": "cli",
