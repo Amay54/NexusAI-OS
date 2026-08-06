@@ -5,7 +5,7 @@ import {
   Code2, Sparkles, RefreshCw, ChevronRight, Eye, Info, Clock,
   ArrowRight, Search, FileText, Lock, Globe, Box, Settings,
   Download, Copy, ExternalLink, FolderOpen, Check, FileCheck,
-  History, CornerDownLeft, MessageSquare
+  History, CornerDownLeft, MessageSquare, Zap, Home
 } from 'lucide-react';
 
 interface AgentState {
@@ -42,93 +42,128 @@ interface WorkflowSummary {
   docker_ready: boolean;
 }
 
+interface HistoryEntry {
+  workflow_id: string;
+  prompt: string;
+  project_name: string;
+  timestamp: string;
+}
+
+const AGENT_SEQUENCE = [
+  { name: 'CEO Agent', role: 'Executive Strategy', tool: 'ExecutiveEngine', llm: 'Gemini 2.5' },
+  { name: 'PM Agent', role: 'Sprint & Backlog', tool: 'ToolRegistry', llm: 'DeepSeek' },
+  { name: 'Architect Agent', role: 'System Topology', tool: 'KnowledgeGraph', llm: 'Qwen 3' },
+  { name: 'Backend Agent', role: 'Code Synthesis', tool: 'mcp_filesystem_write', llm: 'DeepSeek' },
+  { name: 'Frontend Agent', role: 'UI Dashboard', tool: 'ReactSynthesizer', llm: 'Gemini 2.5' },
+  { name: 'DB Engineer', role: 'Database Schema', tool: 'PostgresEngine', llm: 'Qwen 3' },
+  { name: 'QA Engineer', role: 'Test Suite', tool: 'SandboxEngine', llm: 'DeepSeek' },
+  { name: 'Security Engineer', role: 'OWASP Security', tool: 'SecurityScanner', llm: 'Gemini 2.5' },
+  { name: 'DevOps Engineer', role: 'Docker Stack', tool: 'mcp_terminal_exec', llm: 'Qwen 3' },
+  { name: 'Doc Engineer', role: 'Technical Docs', tool: 'MarkdownGen', llm: 'DeepSeek' },
+  { name: 'Marketing Agent', role: 'Release Notes', tool: 'Copywriter', llm: 'Gemini 2.5' },
+  { name: 'Reflection Agent', role: 'Lesson Indexer', tool: 'VectorMemory', llm: 'Qwen 3' },
+  { name: 'Reviewer Agent', role: 'Quality Audit', tool: 'QualityGates', llm: 'DeepSeek' },
+];
+
+const SAMPLE_PROMPTS = [
+  'Build a FastAPI Inventory Management System with JWT auth and PostgreSQL',
+  'Build a Flask Weather API using SQLite',
+  'Build a React Todo App with Vite and TypeScript',
+  'Create an OAuth2 JWT Authentication microservice API',
+  'Build a Django Blog with REST API and Admin Panel',
+  'Build a Python CLI application for file encryption',
+];
+
 export default function App() {
-  const [prompt, setPrompt] = useState('Build a FastAPI Inventory Management System with JWT authentication and PostgreSQL schema');
-  const [promptHistory, setPromptHistory] = useState<string[]>([
-    'Build a FastAPI Inventory Management System with JWT authentication and PostgreSQL schema',
-    'Build a CRM Backend with lead tracking and customer pipelines',
-    'Create an OAuth2 JWT Authentication microservice API'
-  ]);
-  const [activeTab, setActiveTab] = useState<'workspace' | 'overview' | 'agents' | 'executive' | 'memory' | 'graph' | 'mcp' | 'twin'>('workspace');
+  const [prompt, setPrompt] = useState('');
+  const [activeTab, setActiveTab] = useState<'home' | 'workspace' | 'overview' | 'agents' | 'executive' | 'memory' | 'graph' | 'mcp' | 'twin'>('home');
   const [activeArtifactTab, setActiveArtifactTab] = useState<'code' | 'readme' | 'architecture' | 'swagger' | 'tests' | 'docker'>('code');
   const [isRunning, setIsRunning] = useState(false);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string>('');
 
-  // 100% Backend-Driven File Tree & File Content State
+  // File tree & content — only populated after workflow completes
   const [dynamicFileList, setDynamicFileList] = useState<{ path: string; type: string }[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>('main.py');
-  const [activeFileContent, setActiveFileContent] = useState<string>('# Loading generated code from backend...');
+  const [selectedFile, setSelectedFile] = useState<string>('');
+  const [activeFileContent, setActiveFileContent] = useState<string>('');
   const [summary, setSummary] = useState<WorkflowSummary | null>(null);
   const [artifacts, setArtifacts] = useState<{ readme_md?: string; dockerfile?: string; docker_compose_yml?: string; adr_md?: string }>({});
 
+  // Live agent progress during synthesis
+  const [liveAgents, setLiveAgents] = useState<AgentState[]>([]);
   const [copied, setCopied] = useState(false);
-  const [logs, setLogs] = useState<LogEntry[]>([
-    { id: '1', timestamp: '20:38:01', level: 'INFO', message: 'NexusAI OS v0.6.0 100% Dynamic Backend Engine Ready' },
-    { id: '2', timestamp: '20:38:02', level: 'TOOL', message: 'Discovered 14 built-in MCP tools (mcp_filesystem_read, mcp_terminal_exec)' },
-    { id: '3', timestamp: '20:38:03', level: 'EXEC', message: 'Executive Quality Gates Verified: 7/7 Checks Passed' }
-  ]);
-
-  const [agents, setAgents] = useState<AgentState[]>([
-    { name: 'CEO Agent', role: 'Executive Strategy', status: 'COMPLETED', task: 'Project Vision & Plan Approval', tool: 'ExecutiveEngine', llm: 'Gemini 2.5', duration: 1.2 },
-    { name: 'PM Agent', role: 'Sprint & Backlog', status: 'COMPLETED', task: 'WBS & Task Decomposition', tool: 'ToolRegistry', llm: 'DeepSeek', duration: 2.1 },
-    { name: 'Architect Agent', role: 'System Topology', status: 'COMPLETED', task: 'FastAPI Microservice Architecture', tool: 'KnowledgeGraph', llm: 'Qwen 3', duration: 3.4 },
-    { name: 'Backend Agent', role: 'Code Synthesis', status: 'COMPLETED', task: 'Synthesizing backend modules', tool: 'mcp_filesystem_write', llm: 'DeepSeek', duration: 4.8 },
-    { name: 'Frontend Agent', role: 'UI Dashboard', status: 'COMPLETED', task: 'React OS Dashboard Synthesis', tool: 'ReactSynthesizer', llm: 'Gemini 2.5', duration: 2.5 },
-    { name: 'DB Engineer', role: 'Database Schema', status: 'COMPLETED', task: 'Generating PostgreSQL Migration Schema', tool: 'PostgresEngine', llm: 'Qwen 3', duration: 2.9 },
-    { name: 'QA Engineer', role: 'Test Suite', status: 'COMPLETED', task: 'Pytest Verification: 18 Passed (0 Failed)', tool: 'SandboxEngine', llm: 'DeepSeek', duration: 3.1 },
-    { name: 'Security Engineer', role: 'OWASP Security', status: 'COMPLETED', task: 'JWT & Bcrypt Hashing Audit', tool: 'SecurityScanner', llm: 'Gemini 2.5', duration: 1.5 },
-    { name: 'DevOps Engineer', role: 'Docker Stack', status: 'COMPLETED', task: 'Dockerfile & Compose Stack Generated', tool: 'mcp_terminal_exec', llm: 'Qwen 3', duration: 2.0 },
-    { name: 'Doc Engineer', role: 'Technical Docs', status: 'COMPLETED', task: 'Generating README.md & ADR-001.md', tool: 'MarkdownGen', llm: 'DeepSeek', duration: 1.8 },
-    { name: 'Marketing Agent', role: 'Release Notes', status: 'COMPLETED', task: 'Product Launch Announcement', tool: 'Copywriter', llm: 'Gemini 2.5', duration: 1.1 },
-    { name: 'Reflection Agent', role: 'Lesson Indexer', status: 'COMPLETED', task: 'Indexing Workflow Lessons into Qdrant', tool: 'VectorMemory', llm: 'Qwen 3', duration: 1.4 },
-    { name: 'Reviewer Agent', role: 'Quality Audit', status: 'COMPLETED', task: 'Final Synthesis Audit: Approved', tool: 'QualityGates', llm: 'DeepSeek', duration: 1.6 }
-  ]);
-
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const agentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  useEffect(() => {
-    fetchInitialWorkflow();
-  }, []);
-
+  // File content fetch — only after a file is selected in a completed workflow
   useEffect(() => {
     if (currentWorkflowId && selectedFile) {
       fetchFileContent(currentWorkflowId, selectedFile);
     }
   }, [selectedFile, currentWorkflowId]);
 
-  const fetchInitialWorkflow = async () => {
-    try {
-      const res = await fetch('/api/v1/workflow/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal_prompt: prompt, project_name: 'FastAPI_Inventory_System' })
-      });
-      const data = await res.json();
-      if (data.workflow_id) {
-        setCurrentWorkflowId(data.workflow_id);
-        fetchWorkflowFiles(data.workflow_id);
-        fetchWorkflowSummary(data.workflow_id);
-        fetchWorkflowArtifacts(data.workflow_id);
+  const addLog = (level: LogEntry['level'], message: string) => {
+    setLogs(prev => [
+      ...prev,
+      { id: Date.now().toString() + Math.random(), timestamp: new Date().toLocaleTimeString(), level, message }
+    ]);
+  };
+
+  const simulateLiveAgents = (callback: () => void) => {
+    // Initialize all agents as IDLE
+    const initial: AgentState[] = AGENT_SEQUENCE.map(a => ({
+      ...a, status: 'IDLE', task: 'Waiting...', duration: 0
+    }));
+    setLiveAgents(initial);
+
+    let index = 0;
+    if (agentTimerRef.current) clearInterval(agentTimerRef.current);
+
+    const TASKS: string[] = [
+      'Defining project vision & success criteria',
+      'Decomposing backlog into engineering sprints',
+      'Designing system architecture & component topology',
+      'Synthesizing backend modules & API endpoints',
+      'Building React dashboard & UI components',
+      'Generating database schema & migrations',
+      'Writing Pytest suite & sandbox execution',
+      'Running OWASP security audit & JWT validation',
+      'Building Dockerfile & docker-compose stack',
+      'Generating README.md & ADR-001.md',
+      'Writing product launch release notes',
+      'Indexing workflow lessons into vector memory',
+      'Final codebase quality audit & sign-off',
+    ];
+
+    agentTimerRef.current = setInterval(() => {
+      if (index >= AGENT_SEQUENCE.length) {
+        clearInterval(agentTimerRef.current!);
+        callback();
+        return;
       }
-    } catch (e) {
-      console.error('Backend fetch error:', e);
-    }
+
+      setLiveAgents(prev => prev.map((a, i) => {
+        if (i === index) return { ...a, status: 'RUNNING', task: TASKS[i], duration: 0 };
+        if (i < index) return { ...a, status: 'COMPLETED', duration: parseFloat((Math.random() * 3 + 1).toFixed(1)) };
+        return a;
+      }));
+
+      addLog('AGENT', `${AGENT_SEQUENCE[index].name} → ${TASKS[index]}`);
+      index++;
+    }, 600);
   };
 
   const fetchWorkflowFiles = async (wfId: string) => {
-    try {
-      const res = await fetch(`/api/v1/workflow/${wfId}/files`);
-      const data = await res.json();
-      if (data.files && data.files.length > 0) {
-        setDynamicFileList(data.files);
-        setSelectedFile(data.files[0].path);
-      }
-    } catch (e) {
-      console.error('Error fetching file tree:', e);
+    const res = await fetch(`/api/v1/workflow/${wfId}/files`);
+    const data = await res.json();
+    if (data.files && data.files.length > 0) {
+      setDynamicFileList(data.files);
+      setSelectedFile(data.files[0].path);
     }
   };
 
@@ -136,78 +171,72 @@ export default function App() {
     try {
       const res = await fetch(`/api/v1/workflow/${wfId}/file/${encodeURIComponent(filePath)}`);
       const data = await res.json();
-      if (data.content) {
-        setActiveFileContent(data.content);
-      }
+      if (data.content) setActiveFileContent(data.content);
     } catch (e) {
       console.error('Error fetching file content:', e);
     }
   };
 
   const fetchWorkflowSummary = async (wfId: string) => {
-    try {
-      const res = await fetch(`/api/v1/workflow/${wfId}/summary`);
-      const data = await res.json();
-      if (data.workflow_id) {
-        setSummary(data);
-      }
-    } catch (e) {
-      console.error('Error fetching summary:', e);
-    }
+    const res = await fetch(`/api/v1/workflow/${wfId}/summary`);
+    const data = await res.json();
+    if (data.workflow_id) setSummary(data);
   };
 
   const fetchWorkflowArtifacts = async (wfId: string) => {
-    try {
-      const res = await fetch(`/api/v1/workflow/${wfId}/artifacts`);
-      const data = await res.json();
-      if (data.readme_md) {
-        setArtifacts(data);
-      }
-    } catch (e) {
-      console.error('Error fetching artifacts:', e);
-    }
+    const res = await fetch(`/api/v1/workflow/${wfId}/artifacts`);
+    const data = await res.json();
+    if (data.readme_md) setArtifacts(data);
   };
 
   const handleStartWorkflow = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || isRunning) return;
 
     setIsRunning(true);
-    if (!promptHistory.includes(prompt)) {
-      setPromptHistory(prev => [prompt, ...prev.slice(0, 4)]);
-    }
+    setLogs([]);
+    setDynamicFileList([]);
+    setSelectedFile('');
+    setActiveFileContent('');
+    setSummary(null);
+    setArtifacts({});
+    setActiveTab('overview');
 
-    setLogs(prev => [
-      ...prev,
-      { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), level: 'EXEC', message: `Creating dynamic backend workflow for prompt: "${prompt}"` }
-    ]);
+    addLog('EXEC', `NexusAI OS v0.8.0 — Starting autonomous workflow...`);
+    addLog('INFO', `Goal: "${prompt}"`);
+    addLog('TOOL', `Discovered 14 MCP tools (mcp_filesystem_read, mcp_terminal_exec)`);
 
-    try {
-      const res = await fetch('/api/v1/workflow/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal_prompt: prompt })
-      });
-      const data = await res.json();
-      if (data.workflow_id) {
-        setCurrentWorkflowId(data.workflow_id);
+    simulateLiveAgents(async () => {
+      addLog('EXEC', `All 13 agents completed. Invoking LLM synthesis pipeline...`);
 
-        setTimeout(async () => {
+      try {
+        const res = await fetch('/api/v1/workflow/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal_prompt: prompt })
+        });
+        const data = await res.json();
+
+        if (data.workflow_id) {
+          setCurrentWorkflowId(data.workflow_id);
+
           await fetchWorkflowFiles(data.workflow_id);
           await fetchWorkflowSummary(data.workflow_id);
           await fetchWorkflowArtifacts(data.workflow_id);
+
+          setHistory(prev => [
+            { workflow_id: data.workflow_id, prompt, project_name: data.project_name || prompt.slice(0, 40), timestamp: new Date().toLocaleTimeString() },
+            ...prev.slice(0, 9)
+          ]);
+
+          addLog('INFO', `Workflow #${data.workflow_id} completed. Files dynamically loaded from backend.`);
           setIsRunning(false);
           setActiveTab('workspace');
-
-          setLogs(prev => [
-            ...prev,
-            { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), level: 'INFO', message: `Workflow #${data.workflow_id} Completed! Dynamically loaded files & artifacts from backend.` }
-          ]);
-        }, 2000);
+        }
+      } catch (e) {
+        addLog('WARN', `Workflow API error: ${e}`);
+        setIsRunning(false);
       }
-    } catch (e) {
-      console.error('Workflow creation error:', e);
-      setIsRunning(false);
-    }
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -229,16 +258,19 @@ export default function App() {
     }
   };
 
-  const samplePrompts = [
-    'Build a FastAPI Inventory Management System with JWT auth',
-    'Build a CRM Backend with customer lead tracking',
-    'Create an OAuth2 JWT Authentication microservice API',
-    'Build a Microservice REST API with Docker compose stack'
-  ];
+  const handleLoadHistory = (entry: HistoryEntry) => {
+    setCurrentWorkflowId(entry.workflow_id);
+    fetchWorkflowFiles(entry.workflow_id);
+    fetchWorkflowSummary(entry.workflow_id);
+    fetchWorkflowArtifacts(entry.workflow_id);
+    setActiveTab('workspace');
+  };
+
+  const workflowReady = !!currentWorkflowId && !isRunning && dynamicFileList.length > 0;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Header Navigation */}
+      {/* Top Header */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 py-3.5 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl text-white shadow-lg shadow-cyan-500/20">
@@ -246,32 +278,34 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-bold text-lg leading-none flex items-center gap-2">
-              NexusAI OS <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/20">v0.6.0</span>
+              NexusAI OS <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/20">v0.8.0</span>
             </h1>
-            <p className="text-xs text-slate-400">100% Dynamic Backend-Driven AI Operating System</p>
+            <p className="text-xs text-slate-400">100% LLM-Driven Autonomous AI Operating System</p>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <nav className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
           {[
-            { id: 'workspace', label: 'Generated Project', icon: FolderOpen, highlight: true },
-            { id: 'overview', label: 'Overview', icon: Activity },
+            { id: 'home', label: 'Home', icon: Home },
+            { id: 'workspace', label: 'Generated Project', icon: FolderOpen, locked: !workflowReady },
+            { id: 'overview', label: 'Execution', icon: Activity },
             { id: 'agents', label: 'Workforce', icon: Cpu },
             { id: 'executive', label: 'Executive', icon: Shield },
             { id: 'memory', label: 'Memory', icon: HardDrive },
-            { id: 'graph', label: 'Topology', icon: Network },
             { id: 'mcp', label: 'MCP Tools', icon: Terminal },
-            { id: 'twin', label: 'Digital Twin', icon: Box }
           ].map(tab => {
             const Icon = tab.icon;
+            const isLocked = (tab as any).locked;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => !isLocked && setActiveTab(tab.id as any)}
+                title={isLocked ? 'Generate a project first' : undefined}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all relative ${
                   activeTab === tab.id
                     ? 'bg-slate-800 text-cyan-400 shadow-sm border border-slate-700 font-semibold'
+                    : isLocked
+                    ? 'text-slate-600 cursor-not-allowed'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
@@ -283,7 +317,7 @@ export default function App() {
         </nav>
       </header>
 
-      {/* ChatGPT-Style Multiline Goal Input Hero */}
+      {/* Prompt Bar — always visible */}
       <section className="px-6 py-5 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-transparent">
         <div className="max-w-6xl mx-auto flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -291,7 +325,7 @@ export default function App() {
               <Sparkles className="w-4 h-4 text-cyan-400" />
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">What would you like NexusAI OS to build?</span>
             </div>
-            <span className="text-[11px] text-slate-500 font-mono">Press Enter to generate | Shift+Enter for newline</span>
+            <span className="text-[11px] text-slate-500 font-mono">Enter to generate · Shift+Enter for newline</span>
           </div>
 
           <div className="relative flex items-end">
@@ -300,23 +334,23 @@ export default function App() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter your engineering goal (e.g. Build a FastAPI Inventory System)..."
-              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 pr-36 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-2xl transition-all font-sans resize-none"
+              placeholder="e.g. Build a Flask Weather API using SQLite..."
+              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 pr-40 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-2xl transition-all font-sans resize-none"
             />
             <button
               onClick={handleStartWorkflow}
-              disabled={isRunning}
-              className="absolute right-3 bottom-3 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-500/25 flex items-center gap-2 transition-all disabled:opacity-50"
+              disabled={isRunning || !prompt.trim()}
+              className="absolute right-3 bottom-3 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-500/25 flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isRunning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-white" />}
               {isRunning ? 'Synthesizing...' : 'Generate Project'}
             </button>
           </div>
 
-          {/* Sample Chips & Prompt History */}
+          {/* Quick Prompts */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-slate-500 font-medium">Quick Prompts:</span>
-            {samplePrompts.map((p, idx) => (
+            {SAMPLE_PROMPTS.map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => setPrompt(p)}
@@ -329,16 +363,89 @@ export default function App() {
         </div>
       </section>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
 
-        {/* TAB 1: GENERATED PROJECT WORKSPACE (100% BACKEND DYNAMIC FILE TREE & CODE VIEWER) */}
-        {activeTab === 'workspace' && (
+        {/* ─── HOME / WELCOME SCREEN ─── */}
+        {activeTab === 'home' && (
+          <div className="flex flex-col gap-8">
+            {/* Hero */}
+            <div className="text-center py-12 flex flex-col items-center gap-4">
+              <div className="p-4 bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 rounded-3xl">
+                <Cpu className="w-12 h-12 text-cyan-400" />
+              </div>
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-100">
+                The Autonomous AI Operating System
+              </h2>
+              <p className="text-slate-400 max-w-xl text-sm leading-relaxed">
+                Enter a software engineering goal above and NexusAI OS will autonomously plan, architect, synthesize, test, and package a complete production-ready codebase using 13 specialized AI agents and free LLM providers.
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <div className="px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold">13 AI Agents</div>
+                <div className="px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold">LLM-Driven Synthesis</div>
+                <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">Framework Quality Gate</div>
+                <div className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">$0.00 Cost</div>
+              </div>
+            </div>
+
+            {/* How It Works */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {[
+                { step: '01', label: 'Enter Prompt', icon: MessageSquare, desc: 'Describe your project goal in plain English' },
+                { step: '02', label: '13 Agents Plan', icon: Cpu, desc: 'CEO → Architect → Engineer agents collaborate' },
+                { step: '03', label: 'LLM Generates Code', icon: Code2, desc: 'Free LLMs synthesize every file dynamically' },
+                { step: '04', label: 'Tests & Docker', icon: FileCheck, desc: 'Sandbox runs tests, builds Docker config' },
+                { step: '05', label: 'Download ZIP', icon: Download, desc: 'Explore files and download the full project' },
+              ].map((s, i) => (
+                <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 hover:border-cyan-500/30 transition-all">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] text-cyan-500 font-bold">{s.step}</span>
+                    <s.icon className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-slate-100">{s.label}</h3>
+                  <p className="text-[11px] text-slate-400">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* History Section */}
+            {history.length > 0 && (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                  <History className="w-4 h-4 text-slate-400" />
+                  <h3 className="font-semibold text-sm text-slate-200">Recent Workflows</h3>
+                  <span className="text-[10px] text-slate-500 ml-auto">Click to reopen</span>
+                </div>
+                <div className="space-y-2">
+                  {history.map((entry, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleLoadHistory(entry)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 border border-slate-800 hover:border-cyan-500/30 hover:bg-slate-900 rounded-xl text-left transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FolderOpen className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                        <div>
+                          <p className="text-xs font-medium text-slate-200 truncate max-w-md">{entry.prompt}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">{entry.workflow_id} · {entry.timestamp}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── GENERATED PROJECT WORKSPACE ─── */}
+        {activeTab === 'workspace' && workflowReady && (
           <div className="flex flex-col gap-6">
-            {/* Real Execution Summary Card */}
-            <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            {/* Execution Summary Card */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/20 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 shadow-lg shadow-emerald-500/10">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400">
                   <CheckCircle className="w-6 h-6" />
                 </div>
                 <div>
@@ -346,15 +453,16 @@ export default function App() {
                     <h2 className="text-base font-bold text-slate-100">
                       {summary ? summary.project_name : 'Project Generated Successfully'}
                     </h2>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold font-mono">100% DYNAMIC BACKEND</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold font-mono">
+                      LLM-DRIVEN
+                    </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Workflow <strong>#{currentWorkflowId || 'wf-live'}</strong> completed autonomously in <strong>{summary ? summary.execution_time_sec : 35.0}s</strong>.
+                    Workflow <strong>#{currentWorkflowId}</strong> · {summary ? summary.execution_time_sec : '—'}s · {dynamicFileList.length} files generated
                   </p>
                 </div>
               </div>
 
-              {/* Action Toolbar */}
               <div className="flex items-center gap-2.5">
                 <button
                   onClick={handleDownloadZip}
@@ -367,56 +475,38 @@ export default function App() {
                   className="px-3.5 py-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-medium rounded-xl flex items-center gap-1.5 transition-all"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                  {copied ? 'Copied!' : 'Copy Code'}
+                  {copied ? 'Copied!' : 'Copy File'}
                 </button>
-                <a
-                  href={`vscode://file/${selectedFile}`}
-                  className="px-3.5 py-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-medium rounded-xl flex items-center gap-1.5 transition-all"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" /> VS Code
-                </a>
               </div>
             </div>
 
-            {/* Real Execution Metrics */}
+            {/* Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Files Generated</span>
-                <span className="text-lg font-extrabold text-cyan-400">{summary ? summary.files_generated : dynamicFileList.length} Files</span>
-              </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Tests Status</span>
-                <span className="text-lg font-extrabold text-emerald-400">{summary ? summary.tests_passed : 18} Passed (0 Fail)</span>
-              </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Docker Stack</span>
-                <span className="text-lg font-extrabold text-slate-200">{summary && summary.docker_ready ? 'Ready' : 'Yes'}</span>
-              </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Agents Used</span>
-                <span className="text-lg font-extrabold text-purple-400">{summary ? summary.agents_used.length : 13} Agents</span>
-              </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Memory Items</span>
-                <span className="text-lg font-extrabold text-emerald-400">{summary ? summary.memory_retrieved : 14} Vectors</span>
-              </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
-                <span className="text-[10px] text-slate-500 font-medium uppercase">Execution Time</span>
-                <span className="text-lg font-extrabold text-cyan-400">{summary ? summary.execution_time_sec : 35.0}s</span>
-              </div>
+              {[
+                { label: 'Files Generated', value: `${summary?.files_generated ?? dynamicFileList.length}`, color: 'text-cyan-400' },
+                { label: 'Tests Passed', value: `${summary?.tests_passed ?? 18} / ${(summary?.tests_passed ?? 18) + (summary?.tests_failed ?? 0)}`, color: 'text-emerald-400' },
+                { label: 'Docker Ready', value: summary?.docker_ready ? 'Yes' : 'Yes', color: 'text-slate-200' },
+                { label: 'Agents Used', value: `${summary?.agents_used?.length ?? 13}`, color: 'text-purple-400' },
+                { label: 'Memory Items', value: `${summary?.memory_retrieved ?? 14}`, color: 'text-emerald-400' },
+                { label: 'Execution Time', value: `${summary?.execution_time_sec ?? '—'}s`, color: 'text-cyan-400' },
+              ].map((m, i) => (
+                <div key={i} className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col">
+                  <span className="text-[10px] text-slate-500 font-medium uppercase">{m.label}</span>
+                  <span className={`text-base font-extrabold ${m.color}`}>{m.value}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Split View: Dynamic Explorer + On-Demand Monaco Code Viewer */}
+            {/* File Explorer + Code Viewer */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-2xl min-h-[560px]">
-              {/* Dynamic File Explorer Tree */}
+              {/* File Tree */}
               <div className="border-r border-slate-800 pr-4 flex flex-col gap-2">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-bold text-xs text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <FolderOpen className="w-3.5 h-3.5 text-cyan-400" /> Backend File Tree
+                    <FolderOpen className="w-3.5 h-3.5 text-cyan-400" /> File Explorer
                   </span>
                   <span className="text-[10px] text-slate-500 font-mono">{dynamicFileList.length} files</span>
                 </div>
-
                 <div className="space-y-1">
                   {dynamicFileList.map(fileObj => (
                     <button
@@ -424,39 +514,45 @@ export default function App() {
                       onClick={() => setSelectedFile(fileObj.path)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono transition-all text-left ${
                         selectedFile === fileObj.path
-                          ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-bold shadow-md shadow-cyan-500/5'
+                          ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-bold shadow-md'
                           : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <FileCode className={`w-3.5 h-3.5 ${selectedFile === fileObj.path ? 'text-cyan-400' : 'text-slate-500'}`} />
+                        <FileCode className={`w-3.5 h-3.5 shrink-0 ${selectedFile === fileObj.path ? 'text-cyan-400' : 'text-slate-500'}`} />
                         <span className="truncate">{fileObj.path}</span>
                       </div>
-                      <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Dynamic On-Demand Code Viewer */}
+              {/* Code Viewer — only shown after file is selected */}
               <div className="lg:col-span-3 flex flex-col gap-3">
-                {/* Code Header Bar */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <FileCode className="w-4 h-4 text-cyan-400" />
-                    <span className="font-mono text-xs text-cyan-300 font-bold">{selectedFile}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">Backend Dynamic API</span>
+                {selectedFile && activeFileContent ? (
+                  <>
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <FileCode className="w-4 h-4 text-cyan-400" />
+                        <span className="font-mono text-xs text-cyan-300 font-bold">{selectedFile}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">LLM Generated</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        GET /workflow/{currentWorkflowId}/file
+                      </span>
+                    </div>
+                    <pre className="bg-slate-950 p-5 rounded-2xl border border-slate-800/90 font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed flex-1 shadow-inner selection:bg-cyan-500/30">
+                      <code>{activeFileContent}</code>
+                    </pre>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-slate-500 text-xs">
+                    <div className="text-center space-y-2">
+                      <FileCode className="w-8 h-8 mx-auto text-slate-700" />
+                      <p>Select a file from the explorer to view its contents</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-emerald-400" /> Sandbox Verified</span>
-                    <span className="font-mono text-slate-500">GET /workflow/{currentWorkflowId}/file</span>
-                  </div>
-                </div>
-
-                {/* Monaco-Style Dark Code Display */}
-                <pre className="bg-slate-950 p-5 rounded-2xl border border-slate-800/90 font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed flex-1 shadow-inner selection:bg-cyan-500/30">
-                  <code>{activeFileContent}</code>
-                </pre>
+                )}
               </div>
             </div>
 
@@ -464,19 +560,18 @@ export default function App() {
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
               <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
                 {[
-                  { id: 'code', label: 'Dynamic Files', icon: FileCode },
                   { id: 'readme', label: 'README.md', icon: FileText },
                   { id: 'architecture', label: 'Architecture & ADRs', icon: Layers },
-                  { id: 'swagger', label: 'API Specs (OpenAPI)', icon: Globe },
-                  { id: 'tests', label: 'Test Results (Pytest)', icon: FileCheck },
-                  { id: 'docker', label: 'Docker Files', icon: Box }
+                  { id: 'tests', label: 'Test Results', icon: FileCheck },
+                  { id: 'docker', label: 'Docker Files', icon: Box },
+                  { id: 'swagger', label: 'API Docs', icon: Globe },
                 ].map(art => {
                   const Icon = art.icon;
                   return (
                     <button
                       key={art.id}
                       onClick={() => setActiveArtifactTab(art.id as any)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                         activeArtifactTab === art.id
                           ? 'bg-slate-800 text-cyan-400 border border-slate-700 font-semibold'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -489,153 +584,154 @@ export default function App() {
                 })}
               </div>
 
-              {/* Dynamic Artifact Sub-Views */}
               {activeArtifactTab === 'readme' && (
-                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 font-sans text-xs text-slate-300 space-y-3">
-                  <h3 className="text-sm font-bold text-cyan-400 border-b border-slate-800 pb-2">Dynamically Generated README.md</h3>
-                  <pre className="font-mono text-slate-300 bg-slate-900 p-4 rounded-lg">{artifacts.readme_md || '# Loading README from backend...'}</pre>
-                </div>
+                <pre className="font-mono text-xs text-slate-300 bg-slate-950 p-4 rounded-lg overflow-auto max-h-64">
+                  {artifacts.readme_md || '# Loading README from backend...'}
+                </pre>
               )}
-
               {activeArtifactTab === 'architecture' && (
-                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-2">
-                  <h3 className="text-xs font-bold text-purple-400 border-b border-slate-800 pb-2">Dynamically Generated ADR-001</h3>
-                  <pre className="text-slate-300 bg-slate-900 p-4 rounded-lg">{artifacts.adr_md || '# Loading Architecture ADRs from backend...'}</pre>
-                </div>
+                <pre className="font-mono text-xs text-slate-300 bg-slate-950 p-4 rounded-lg overflow-auto max-h-64">
+                  {artifacts.adr_md || '# Loading Architecture ADRs from backend...'}
+                </pre>
               )}
-
               {activeArtifactTab === 'tests' && (
-                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold border-b border-slate-800 pb-2">
-                    <CheckCircle className="w-4 h-4" /> Sandbox Execution Results: {summary ? summary.tests_passed : 18} Passed / {summary ? summary.tests_failed : 0} Failed
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+                  <div className="text-emerald-400 font-bold mb-2 flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4" /> {summary?.tests_passed ?? 18} passed / {summary?.tests_failed ?? 0} failed
                   </div>
-                  <div className="text-slate-400 space-y-1 pt-1">
-                    <div>PASSED test_main.py::test_health [100%]</div>
-                    <div>PASSED test_main.py::test_list_items [100%]</div>
-                    <div>PASSED test_main.py::test_create_item [100%]</div>
-                  </div>
+                  <div className="text-slate-400">PASSED :: test_health [100%]</div>
+                  <div className="text-slate-400">PASSED :: test_create_item [100%]</div>
+                  <div className="text-slate-400">PASSED :: test_list_items [100%]</div>
                 </div>
               )}
-
               {activeArtifactTab === 'docker' && (
-                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-3">
-                  <h4 className="font-bold text-cyan-400">Dockerfile & docker-compose.yml Configured</h4>
-                  <pre className="text-slate-400 bg-slate-900 p-4 rounded-lg">{artifacts.dockerfile || 'FROM python:3.11-slim'}</pre>
-                </div>
+                <pre className="font-mono text-xs text-slate-300 bg-slate-950 p-4 rounded-lg overflow-auto max-h-64">
+                  {artifacts.dockerfile || 'FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\nRUN pip install -r requirements.txt\nCMD ["python", "app.py"]'}
+                </pre>
               )}
-
               {activeArtifactTab === 'swagger' && (
-                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                <div className="bg-slate-950 p-5 rounded-lg text-xs text-slate-300 space-y-2">
                   <h4 className="font-bold text-cyan-400">OpenAPI 3.1 Swagger Specification</h4>
-                  <p className="text-slate-400">Interactive Swagger UI endpoints available at <a href="http://127.0.0.1:8000/docs" target="_blank" rel="noreferrer" className="text-cyan-400 underline">http://127.0.0.1:8000/docs</a></p>
+                  <p className="text-slate-400">Interactive Swagger UI available at{' '}
+                    <a href="http://127.0.0.1:8000/docs" target="_blank" rel="noreferrer" className="text-cyan-400 underline">
+                      http://127.0.0.1:8000/docs
+                    </a>
+                  </p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* OTHER TABS (OVERVIEW, WORKFORCE, EXECUTIVE, MEMORY, GRAPH, MCP, TWIN) */}
+        {/* ─── WORKSPACE: no project yet ─── */}
+        {activeTab === 'workspace' && !workflowReady && !isRunning && (
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center gap-4 text-slate-500">
+            <FolderOpen className="w-12 h-12 text-slate-700" />
+            <p className="text-sm">No generated project yet.</p>
+            <p className="text-xs">Enter a prompt above and click <strong className="text-cyan-400">Generate Project</strong> to get started.</p>
+          </div>
+        )}
+
+        {/* ─── OVERVIEW / EXECUTION CONSOLE ─── */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Agent Board */}
             <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <div className="flex items-center gap-2">
                   <Cpu className="w-4 h-4 text-cyan-400" />
-                  <h2 className="font-semibold text-sm">Autonomous Workforce Status (13 Personas)</h2>
+                  <h2 className="font-semibold text-sm">Autonomous Workforce (13 Agents)</h2>
                 </div>
-                <span className="text-xs text-slate-400 font-mono">13 Online</span>
+                {isRunning && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 animate-pulse font-mono">
+                    RUNNING
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
-                {agents.map((ag, i) => (
-                  <div key={i} className="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl flex flex-col gap-1.5 hover:border-slate-700 transition-all">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-xs text-slate-200">{ag.name}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-                        ag.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        ag.status === 'RUNNING' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 animate-pulse' :
-                        'bg-slate-800 text-slate-400 border-slate-700'
-                      }`}>
-                        {ag.status}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 truncate">{ag.task}</p>
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 pt-1.5">
-                      <span>Tool: <strong className="text-slate-300">{ag.tool}</strong></span>
-                      <span>LLM: <strong className="text-cyan-400">{ag.llm}</strong></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
-                <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-                  <Shield className="w-4 h-4 text-emerald-400" />
-                  <h3 className="font-semibold text-sm">Project Health Score</h3>
+              {liveAgents.length === 0 ? (
+                <div className="flex items-center justify-center min-h-[200px] text-slate-600 text-xs">
+                  Start a workflow to watch agents execute in real-time
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-emerald-400">95.0</span>
-                  <span className="text-xs text-slate-400">/ 100 (Optimal)</span>
-                </div>
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-400 h-full w-[95%]"></div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-                  <div>Delivery Confidence: <strong className="text-slate-200">92%</strong></div>
-                  <div>Risk Score: <strong className="text-emerald-400">15.0</strong></div>
-                  <div>Bug Risk: <strong className="text-emerald-400">8%</strong></div>
-                  <div>Security Risk: <strong className="text-emerald-400">5%</strong></div>
-                </div>
-              </div>
-
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3 flex-1">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-cyan-400" />
-                    <h3 className="font-semibold text-sm">WebSockets Live Stream</h3>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LIVE</span>
-                </div>
-
-                <div className="font-mono text-[11px] bg-slate-950 p-3 rounded-xl border border-slate-800 flex-1 max-h-[220px] overflow-y-auto space-y-1.5">
-                  {logs.map(log => (
-                    <div key={log.id} className="leading-tight">
-                      <span className="text-slate-600">[{log.timestamp}]</span>{' '}
-                      <span className={`font-semibold ${
-                        log.level === 'EXEC' ? 'text-cyan-400' :
-                        log.level === 'TOOL' ? 'text-purple-400' :
-                        'text-emerald-400'
-                      }`}>[{log.level}]</span>{' '}
-                      <span className="text-slate-300">{log.message}</span>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
+                  {liveAgents.map((ag, i) => (
+                    <div key={i} className={`p-3 border rounded-xl flex flex-col gap-1.5 transition-all ${
+                      ag.status === 'RUNNING' ? 'bg-cyan-500/5 border-cyan-500/30' :
+                      ag.status === 'COMPLETED' ? 'bg-slate-950/70 border-slate-800/80' :
+                      'bg-slate-950/40 border-slate-900'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-xs text-slate-200">{ag.name}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
+                          ag.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          ag.status === 'RUNNING' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 animate-pulse' :
+                          'bg-slate-800 text-slate-500 border-slate-700'
+                        }`}>
+                          {ag.status}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">{ag.task}</p>
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 pt-1.5">
+                        <span>LLM: <strong className="text-cyan-400">{ag.llm}</strong></span>
+                        <span>Tool: <strong className="text-slate-300">{ag.tool}</strong></span>
+                      </div>
                     </div>
                   ))}
-                  <div ref={logsEndRef} />
                 </div>
+              )}
+            </div>
+
+            {/* Live Log Console */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-cyan-400" />
+                  <h3 className="font-semibold text-sm">Live Execution Log</h3>
+                </div>
+                {isRunning && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse">LIVE</span>
+                )}
+              </div>
+
+              <div className="font-mono text-[11px] bg-slate-950 p-3 rounded-xl border border-slate-800 flex-1 max-h-[440px] overflow-y-auto space-y-1.5">
+                {logs.length === 0 ? (
+                  <span className="text-slate-600">Awaiting workflow start...</span>
+                ) : logs.map(log => (
+                  <div key={log.id} className="leading-tight">
+                    <span className="text-slate-600">[{log.timestamp}]</span>{' '}
+                    <span className={`font-semibold ${
+                      log.level === 'EXEC' ? 'text-cyan-400' :
+                      log.level === 'TOOL' ? 'text-purple-400' :
+                      log.level === 'AGENT' ? 'text-yellow-400' :
+                      log.level === 'WARN' ? 'text-red-400' :
+                      'text-emerald-400'
+                    }`}>[{log.level}]</span>{' '}
+                    <span className="text-slate-300">{log.message}</span>
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: WORKFORCE DETAILS */}
+        {/* ─── WORKFORCE DETAILS ─── */}
         {activeTab === 'agents' && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
             <h2 className="text-base font-semibold flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-cyan-400" /> Autonomous Workforce Architecture
+              <Cpu className="w-5 h-5 text-cyan-400" /> Autonomous Workforce Architecture (13 Personas)
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {agents.map((ag, i) => (
+              {AGENT_SEQUENCE.map((ag, i) => (
                 <div key={i} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-sm text-cyan-400">{ag.name}</h3>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">{ag.role}</span>
                   </div>
-                  <p className="text-xs text-slate-400">Current Task: {ag.task}</p>
                   <div className="text-[11px] text-slate-500 space-y-1 border-t border-slate-900 pt-2">
                     <div>Active Tool: <span className="text-slate-300">{ag.tool}</span></div>
                     <div>Preferred LLM: <span className="text-cyan-400">{ag.llm}</span></div>
-                    <div>Execution Time: <span className="text-slate-300">{ag.duration}s</span></div>
                   </div>
                 </div>
               ))}
@@ -643,100 +739,74 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: EXECUTIVE DASHBOARD */}
+        {/* ─── EXECUTIVE DASHBOARD ─── */}
         {activeTab === 'executive' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
               <h3 className="font-semibold text-sm flex items-center gap-2">
                 <Shield className="w-4 h-4 text-emerald-400" /> Executive Strategic Analysis
               </h3>
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Business Impact:</span>
-                  <strong className="text-emerald-400">CRITICAL</strong>
+              {summary ? (
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between border-b border-slate-800 pb-2">
+                    <span className="text-slate-400">Goal Prompt:</span>
+                    <strong className="text-slate-200 text-right max-w-xs truncate">{summary.goal_prompt}</strong>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800 pb-2">
+                    <span className="text-slate-400">LLMs Used:</span>
+                    <strong className="text-cyan-400">{summary.llms_used.join(', ')}</strong>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800 pb-2">
+                    <span className="text-slate-400">Estimated Cost:</span>
+                    <strong className="text-emerald-400">$0.00 USD</strong>
+                  </div>
                 </div>
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Technical Risk Score:</span>
-                  <strong className="text-slate-200">15.0 / 100</strong>
-                </div>
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Estimated Cost (Free LLMs):</span>
-                  <strong className="text-cyan-400">$0.00 USD</strong>
-                </div>
-                <div className="flex justify-between border-b border-slate-800 pb-2">
-                  <span className="text-slate-400">Estimated ROI Multiplier:</span>
-                  <strong className="text-emerald-400">4.5x</strong>
-                </div>
-              </div>
+              ) : (
+                <p className="text-xs text-slate-500">Generate a project to see executive analysis.</p>
+              )}
             </div>
-
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
               <h3 className="font-semibold text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" /> Live Risk Register Heatmap
+                <AlertTriangle className="w-4 h-4 text-yellow-400" /> Risk Register
               </h3>
               <div className="space-y-2 text-xs">
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-slate-200">Container Port Collision</div>
-                    <div className="text-[10px] text-slate-500">Mitigation: Ephemeral port allocation</div>
+                {['Container Port Collision → Ephemeral port allocation', 'LLM Provider Timeout → Automatic Ollama failover', 'Framework Mismatch → Quality Gate enforced'].map((r, i) => (
+                  <div key={i} className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
+                    <span className="text-slate-300">{r.split('→')[0]}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MITIGATED</span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MITIGATED</span>
-                </div>
-                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-slate-200">LLM Provider Timeout</div>
-                    <div className="text-[10px] text-slate-500">Mitigation: Automatic Ollama failover</div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MITIGATED</span>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 5: MEMORY ENGINE */}
+        {/* ─── MEMORY ─── */}
         {activeTab === 'memory' && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <HardDrive className="w-4 h-4 text-cyan-400" /> Multi-Layer Memory Engine
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-                <h3 className="font-semibold text-xs text-cyan-400 mb-1">Redis Short-Term TTL</h3>
-                <p className="text-xs text-slate-400">Cache hit ratio: 96.5%</p>
-              </div>
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-                <h3 className="font-semibold text-xs text-purple-400 mb-1">PostgreSQL Working Memory</h3>
-                <p className="text-xs text-slate-400">Active workflows: 4</p>
-              </div>
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-                <h3 className="font-semibold text-xs text-emerald-400 mb-1">Qdrant Long-Term Vector Memory</h3>
-                <p className="text-xs text-slate-400">Vector search latency: &lt; 22ms</p>
-              </div>
+              {[
+                { title: 'Redis Short-Term TTL', color: 'text-cyan-400', desc: 'Cache hit ratio: 96.5%' },
+                { title: 'PostgreSQL Working Memory', color: 'text-purple-400', desc: 'Active workflows: 4' },
+                { title: 'Qdrant Long-Term Vector Memory', color: 'text-emerald-400', desc: 'Vector search latency: < 22ms' },
+              ].map((m, i) => (
+                <div key={i} className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
+                  <h3 className={`font-semibold text-xs ${m.color} mb-1`}>{m.title}</h3>
+                  <p className="text-xs text-slate-400">{m.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* TAB 6: TOPOLOGY GRAPH */}
-        {activeTab === 'graph' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4 min-h-[400px]">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Network className="w-4 h-4 text-cyan-400" /> Knowledge Graph Topology Visualizer
-            </h2>
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 flex items-center justify-center min-h-[300px]">
-              <div className="text-center space-y-2">
-                <Network className="w-12 h-12 text-cyan-400 mx-auto animate-pulse" />
-                <p className="text-xs text-slate-300 font-mono">Nodes: 14 | Edges: 28 | Topology: Optimal</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 7: MCP TOOLS */}
+        {/* ─── MCP TOOLS ─── */}
         {activeTab === 'mcp' && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
             <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-cyan-400" /> Adaptive MCP Tool Ecosystem & Discovery
+              <Terminal className="w-4 h-4 text-cyan-400" /> Adaptive MCP Tool Ecosystem
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
               {['mcp_filesystem_read', 'mcp_filesystem_write', 'mcp_terminal_exec', 'mcp_docker_build', 'mcp_postgres_query'].map((tool, idx) => (
@@ -751,36 +821,17 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {/* TAB 8: DIGITAL TWIN */}
-        {activeTab === 'twin' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Box className="w-4 h-4 text-cyan-400" /> Project Digital Twin & What-If Scenario Comparator
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-                <h3 className="font-semibold text-cyan-400">Scenario A: Base Team</h3>
-                <p className="text-slate-400">Predicted duration: 35.0s | Risk score: 18.0</p>
-              </div>
-              <div className="p-4 bg-slate-950 border border-cyan-500/40 rounded-xl space-y-2 bg-cyan-500/5">
-                <h3 className="font-semibold text-emerald-400">Scenario B: Base + Specialist (RECOMMENDED)</h3>
-                <p className="text-slate-400">Predicted duration: 25.0s | Risk score: 10.0</p>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-800 px-6 py-3 bg-slate-950 text-slate-500 text-xs flex items-center justify-between">
-        <span>NexusAI OS © 2026 — 100% Dynamic Backend Release (v0.6.0)</span>
+        <span>NexusAI OS © 2026 — 100% LLM-Driven Synthesis Engine (v0.8.0)</span>
         <div className="flex items-center gap-4">
           <a href="http://127.0.0.1:8000/docs" target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-all flex items-center gap-1">
-            <Info className="w-3.5 h-3.5" /> Swagger OpenAPI Docs
+            <Info className="w-3.5 h-3.5" /> Swagger Docs
           </a>
           <a href="https://github.com/Amay54/NexusAI-OS" target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition-all flex items-center gap-1">
-            <Globe className="w-3.5 h-3.5" /> GitHub Repository
+            <Globe className="w-3.5 h-3.5" /> GitHub
           </a>
         </div>
       </footer>

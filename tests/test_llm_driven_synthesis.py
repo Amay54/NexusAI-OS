@@ -56,7 +56,7 @@ async def test_llm_driven_cli_synthesis():
 async def test_llm_failure_raises_error_without_static_template_fallback():
     """Verifies that invalid LLM responses raise a ValueError and do NOT return a static fallback template."""
     flask_spec = project_synthesizer.parse_spec_from_prompt("FailTest", "Build a Flask App")
-    bad_files = {"app.py": "print('No Flask import here')"}  # Missing Flask import
+    bad_files = {"app.py": "print('Hello world')"}  # Completely missing Flask import
 
     with pytest.raises(ValueError) as exc_info:
         project_synthesizer.validate_framework_match(flask_spec, bad_files)

@@ -2,6 +2,7 @@
 End-to-End 100% LLM-Driven Production Software Synthesizer Engine for NexusAI OS (v0.8.0).
 Connects to IntelligentRouter to dispatch prompts to free LLMs (Gemini 2.5 Flash, DeepSeek, Ollama),
 parses structured JSON code outputs, runs sandbox execution verification, and enforces strict framework quality gates.
+Prints explicit execution trace for every step.
 """
 import json
 import logging
@@ -38,7 +39,7 @@ class ProductionProjectArtifact(BaseModel):
 
 
 class ProductionProjectSynthesizer:
-    """100% LLM-Driven Codebase Synthesizer Engine."""
+    """100% LLM-Driven Codebase Synthesizer Engine with Full Execution Trace Debugging."""
 
     def parse_spec_from_prompt(self, project_name: str, prompt: str) -> ProjectSpec:
         """Extracts target framework, database, domain, and language parameters."""
@@ -111,37 +112,64 @@ class ProductionProjectSynthesizer:
 
         user_prompt = f"Goal Prompt: {goal_prompt}\nTarget Framework: {spec.framework}\nTarget DB: {spec.database}"
 
-        # Attempt 1: Call Intelligent Router
         parsed_data = None
         last_error = None
+        retry_count = 0
 
         for attempt in range(1, 3):
+            retry_count = attempt - 1
+            print(f"\n=======================================================")
+            print(f"[DEBUG EXECUTION TRACE] Attempt #{attempt}")
+            print(f"=======================================================")
+            print(f"Goal Prompt: '{goal_prompt}'")
+            print(f"Target Framework: {spec.framework} | DB: {spec.database}")
+
             try:
-                logger.info(f"LLM Synthesis Attempt {attempt} for prompt: '{goal_prompt}'")
+                # Dispatch to IntelligentRouter
                 res = await intelligent_router.route_and_generate(
                     prompt=user_prompt,
                     system_prompt=system_prompt,
                     category_override=TaskCategory.CODING
                 )
+
+                provider_used = res.get("provider_used", "unknown")
+                is_real_api = (provider_used in ["gemini", "deepseek", "ollama"])
+                is_mock_provider = (provider_used == "mock")
+
+                print(f"1. Selected LLM Provider Category: {res.get('category')}")
+                print(f"2. Provider Name: {provider_used.upper()} ({'REAL EXTERNAL API' if is_real_api else 'MOCK FALLBACK PROVIDER'})")
+                print(f"3. Real API Request Sent: {is_real_api}")
+                if is_mock_provider:
+                    print(f"   [NOTICE] MockDevLLMProvider was invoked because API keys for Gemini/DeepSeek are not configured or Ollama is offline.")
+
                 raw_output = res.get("output", "")
+                print(f"4. Raw LLM Response (first 300 chars):\n{raw_output[:300]}...")
 
                 # Clean markdown code fences if LLM wrapped output
                 clean_output = re.sub(r"^```(?:json)?\s*", "", raw_output.strip(), flags=re.MULTILINE)
                 clean_output = re.sub(r"\s*```$", "", clean_output.strip(), flags=re.MULTILINE)
 
                 parsed = json.loads(clean_output)
-                files_dict = parsed.get("files", {})
+                print(f"5. Parsed JSON Success: True | Root Keys: {list(parsed.keys())}")
 
+                files_dict = parsed.get("files", {})
                 if not isinstance(files_dict, dict) or len(files_dict) == 0:
                     raise ValueError("LLM returned empty or non-dictionary files structure.")
 
                 # Validate Framework Quality Gate
                 self.validate_framework_match(spec, files_dict)
+                print(f"6. Validation Result: PASSED (Framework Quality Gate Verified)")
+                print(f"7. Retry Count: {retry_count}")
+                print(f"8. Final Generated Files List: {list(files_dict.keys())}")
+                print(f"=======================================================\n")
 
                 parsed_data = parsed
                 break
             except Exception as exc:
                 last_error = exc
+                print(f"6. Validation Result: FAILED ({exc})")
+                print(f"7. Retry Count: {retry_count}")
+                print(f"=======================================================\n")
                 logger.warning(f"Synthesis Attempt {attempt} failed validation: {exc}")
 
         if not parsed_data:

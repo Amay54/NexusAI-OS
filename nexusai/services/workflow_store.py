@@ -108,16 +108,21 @@ class WorkflowStoreService:
         return f"# Content for {file_path}"
 
     def get_zip_bytes(self, wf_id: str) -> bytes:
-        """Returns zip bytes for workflow."""
+        """Returns zip bytes for workflow, avoiding duplicate filenames."""
         art = self.get_artifact(wf_id)
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            written = set()
             if art:
                 for filename, content in art.files.items():
                     zf.writestr(filename, content)
-                zf.writestr("Dockerfile", art.dockerfile)
-                zf.writestr("docker-compose.yml", art.docker_compose_yml)
-                zf.writestr("README.md", art.readme_md)
+                    written.add(filename)
+                if "Dockerfile" not in written:
+                    zf.writestr("Dockerfile", art.dockerfile)
+                if "docker-compose.yml" not in written:
+                    zf.writestr("docker-compose.yml", art.docker_compose_yml)
+                if "README.md" not in written:
+                    zf.writestr("README.md", art.readme_md)
                 zf.writestr("docs/ADR-001.md", art.adr_md)
             else:
                 zf.writestr("README.md", "# NexusAI OS Default Project")
