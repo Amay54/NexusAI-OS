@@ -5,19 +5,20 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.2] - Executive Intelligence Layer & Pre-Execution Simulation - 2026-08-06
+
+### Added
+- **Executive Intelligence Engine (`nexusai/services/executive_intelligence.py`)**: Empowers CEO Agent to function as CTO + Engineering Director—evaluating Business Impact, Technical Risk Score, Development Cost Estimation, Timeline Prediction, Complexity Score, ROI Multiplier, Resource Allocation, and Technical Debt Predictions.
+- **Project Health & Risk Scoring Service (`nexusai/services/project_health.py`)**: Calculates real-time Project Health Score (0-100), Delivery Confidence (0.0-1.0), Risk Score, Bug Risk, Security Risk, Maintainability Score, and Performance Score.
+- **Engineering KPIs Tracker (`nexusai/core/kpis.py`)**: Tracks Velocity, Lead Time, Cycle Time, Deployment Frequency, Agent Productivity, Tool Reliability, Failure Rate, and Workflow Success Rates.
+- **Pre-Execution Simulation Engine (`nexusai/services/simulation.py`)**: Simulates workflow execution prior to code run—predicting failure risks, required specialists, execution duration, CPU/Memory load, and expected success probability.
+- **Executive Dashboard REST APIs (`nexusai/api/executive_api.py`)**: Endpoints for Strategic Analysis, Pre-Execution Simulation, Project Health, and Executive Dashboard metrics (`/api/v1/executive/*`).
+- **Executive Test Suite (`tests/test_executive.py`)**: 4 new automated integration tests with 100% pass rate.
+
 ## [v0.3.1] - Adaptive AI Organization Upgrade - 2026-08-06
 
 ### Added
-- **Dynamic Organization Engine (`nexusai/workflows/dynamic_org.py`)**: CEO Agent dynamically determines required agents, parallel execution branches, skipped unnecessary roles, and required specialists based on goal complexity (Simple TODO vs Enterprise SaaS).
-- **Ephemeral Specialist Agent Spawner (`nexusai/agents/spawner.py`)**: Dynamically spawns temporary specialist personas (`OAuth Specialist`, `Docker Specialist`, `React Specialist`, `PostgreSQL Specialist`, `Kubernetes Specialist`) and auto-terminates them upon task completion.
-- **Agent Resource Manager (`nexusai/agents/resource_manager.py`)**: Tracks CPU/Memory utilization, task queue size, workload, and Busy/Idle states to optimize task assignment.
-- **Agent Skill Profiles & Metrics (`nexusai/agents/skill_profiles.py`)**: Tracks domain experience, success rates, average execution times, preferred tools/LLMs, failure histories, and confidence scores.
-- **Cross-Agent Collaboration Engine (`nexusai/agents/collaboration.py`)**: Facilitates peer reviews, pair programming, mentor agent consultations, and help requests.
-- **Negotiation & Debate Engine (`nexusai/services/negotiation.py`)**: Coordinates multi-agent debates, confidence-weighted voting, conflict resolution, and automatic HITL escalation.
-- **Autonomous Replanning Engine (`nexusai/workflows/replanning.py`)**: Catches agent failures, spawns specialist recovery agents, switches tools/LLMs, and retries workflows dynamically.
-- **Company Learning Loop (`nexusai/services/company_learning.py`)**: Updates tool/agent rankings, planning quality estimates, and failure prediction metrics after every workflow run.
-- **Adaptive Org REST APIs (`nexusai/api/dynamic_org_api.py`)**: Endpoints for dynamic org planning, resource metrics, skill profiles, specialist spawning, agent debates, and failure replanning (`/api/v1/org/*`).
-- **Dynamic Org Test Suite (`tests/test_dynamic_org.py`)**: 5 new automated integration tests with 100% pass rate.
+- Dynamic Organization Engine, Ephemeral Specialist Agent Spawner, Agent Resource Manager, Skill Profiles Engine, Cross-Agent Collaboration Engine, Negotiation & Debate Engine, Autonomous Replanning Engine, and Company Learning Loop.
 
 ## [v0.3.0] - Autonomous Multi-Agent Workforce Release - 2026-08-06
 
