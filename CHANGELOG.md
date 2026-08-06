@@ -5,28 +5,28 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.2] - Adaptive MCP Ecosystem & Dynamic Tool Intelligence - 2026-08-06
+
+### Added
+- **Dynamic Tool Knowledge Base (`nexusai/mcp/registry.py`)**: `ToolMetadata` storing tool IDs, descriptions, parameters, permissions, risk levels, vector embeddings, and real-time reliability scores.
+- **Adaptive Tool Discovery Engine (`nexusai/mcp/engine.py`)**: Automatically scans MCP servers and plugin manifests, generates embeddings via `embedding_service`, and registers capabilities into ToolRegistry without manual code edits.
+- **Tool Reasoning Engine (`nexusai/mcp/reasoning.py`)**: Evaluates agent prompts against Tool KB using semantic vector matching, agent support checks, and reliability scores.
+- **Tool Learning & Self-Healing Engine (`nexusai/mcp/learning.py`)**: Tracks invocation latency and success/failure rates, dynamically updates reliability scores, and executes automated retries and provider failovers.
+- **Multi-Tool Planning Engine (`nexusai/mcp/planner.py`)**: Orchestrates Single, Parallel (`asyncio.gather`), Sequential, Conditional, and Fallback tool execution plans.
+- **Dynamic Plugin Marketplace Loader (`nexusai/mcp/plugins.py`)**: Automatically discovers plugins dropped into `plugins/` folder.
+- **Adaptive MCP REST APIs (`nexusai/api/mcp_api.py`)**: Endpoints for tool listing, details, discovery, catalog, task evaluation, metrics, and multi-tool plan execution.
+- **Adaptive MCP Test Suite (`tests/test_mcp_adaptive.py`)**: 5 new automated tests with 100% pass rate.
+- **Tool Catalog Documentation (`docs/mcp/tool_catalog.md`)**: Automatically generated catalog and capability matrix.
+
 ## [v0.2.1] - Enterprise Intelligence Architecture Upgrade - 2026-08-06
 
 ### Added
-- **Memory Versioning (`nexusai/memory/base.py`)**: `MemoryItem` version sequence tracking (`version`, `created_at`, `updated_at`, `source_agent`, `workflow_id`, `confidence_score`, `embedding_provider`, `tags`).
-- **Memory Importance Scoring (`nexusai/memory/base.py`)**: `ImportanceLevel` enum (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) and importance score weighting (`0.0` to `1.0`).
-- **Context Budget Manager (`nexusai/memory/context_budget.py`)**: Intelligent ranking formula $(0.4 \times \text{relevance}) + (0.3 \times \text{importance}) + (0.3 \times \text{recency})$, de-duplication, memory merging, and token budget packing.
-- **Vector Embedding Abstraction (`nexusai/memory/embeddings.py`)**: `BaseEmbeddingProvider` interface supporting Gemini Embeddings, SentenceTransformers, Ollama Embeddings, and Mock Embeddings via configuration.
-- **Knowledge Graph Metadata (`nexusai/services/knowledge_graph.py`)**: Metadata on nodes (`node_type`, `created_at`, `owner`, `confidence`, `tags`) and relationships (`created_by`, `workflow_id`, `confidence`, `timestamp`).
-- **Memory Retrieval Explainability (`nexusai/memory/explainability.py`)**: Logged selection rationale (`similarity_score`, `importance_score`, `recency_score`, `relationship_score`) exposed via `GET /api/v1/memory/explain`.
-- **Workflow Snapshots & Rollback (`nexusai/services/snapshots.py`)**: Periodic state snapshotting (`WorkflowSnapshot`), snapshot diff comparison (`compare_snapshots`), and snapshot rollbacks (`POST /api/v1/snapshots/{id}/rollback`).
-- **Observability Metrics (`nexusai/core/observability.py`)**: Metrics collector measuring retrieval latency, cache hit ratio, vector search latency, compression time, and graph query latency (`GET /api/v1/observability/metrics`).
-- **Benchmark Suite & Report (`tests/test_benchmarks.py`)**: Benchmark test suite generating markdown performance report at `docs/benchmarks/benchmark_report.md`.
+- Memory Versioning, Importance Scoring, Context Budget Manager, Vector Embedding Abstraction, Knowledge Graph Metadata, Explainability Engine, Workflow Snapshots, Observability Metrics, and Performance Benchmarks.
 
 ## [v0.2.0] - Phase 2 Intelligence & Persistence Layer - 2026-08-06
 
 ### Added
-- Multi-Layer Memory Engine (Redis Short-Term, PostgreSQL Working, Qdrant Long-Term Vector).
-- Context Retrieval & Compression Engine.
-- Provider-Agnostic Knowledge Graph Engine.
-- Self-Reflection Engine.
-- Agent State Persistence & History Tracker.
-- Phase 2 REST Routers (`/memory`, `/graph`, `/reflection`, `/workflows`).
+- Multi-Layer Memory Engine, Context Retrieval & Compression Engine, Knowledge Graph Engine, Self-Reflection Engine, and REST Routers.
 
 ## [v0.1.0] - Phase 1 Core Architecture - 2026-08-06
 
