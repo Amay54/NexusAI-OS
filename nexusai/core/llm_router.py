@@ -155,15 +155,18 @@ class MockDevLLMProvider(BaseLLMProvider):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
-        logger.warning("Using MockDevLLMProvider response.")
+        logger.warning("Using MockDevLLMProvider response. Reason: All external providers (Gemini/DeepSeek/Ollama) are unavailable.")
         p_lower = prompt.lower()
         sys_lower = (system_prompt or "").lower()
+
+        # Extract a readable project title from the prompt
+        project_title = prompt.split("User Goal:")[-1].split("\n")[0].strip() if "User Goal:" in prompt else prompt[:60].strip()
 
         # If system prompt requests structured JSON code synthesis:
         if "json" in sys_lower or "files" in sys_lower:
             if "flask" in p_lower:
                 return json.dumps({
-                    "project_name": "FlaskWeatherAPI",
+                    "project_name": project_title or "FlaskApp",
                     "framework": "flask",
                     "language": "python",
                     "files": {
@@ -171,7 +174,7 @@ class MockDevLLMProvider(BaseLLMProvider):
                         "test_app.py": "from app import app\ndef test_health(): pass\n",
                         "requirements.txt": "Flask>=3.0.0\npytest\n",
                         "Dockerfile": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"python\", \"app.py\"]\n",
-                        "README.md": "# Flask Weather API\n"
+                        "README.md": f"# {project_title}\n\nFramework: Flask\n"
                     }
                 })
             elif "react" in p_lower:
@@ -200,15 +203,16 @@ class MockDevLLMProvider(BaseLLMProvider):
                         "README.md": "# Django Blog\n"
                     }
                 })
-            elif "cli" in p_lower:
+            elif any(kw in p_lower for kw in ["cli", "calculator", "command", "script", "command-line"]):
                 return json.dumps({
-                    "project_name": "PythonCLI",
+                    "project_name": project_title or "PythonCLI",
                     "framework": "cli",
                     "language": "python",
                     "files": {
-                        "cli.py": "import argparse\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.parse_args()\nif __name__ == '__main__': main()\n",
-                        "requirements.txt": "pytest\n",
-                        "README.md": "# Python CLI Application\n"
+                        "calculator.py": "import argparse\n\ndef add(a, b): return a + b\ndef subtract(a, b): return a - b\ndef multiply(a, b): return a * b\ndef divide(a, b): return a / b if b != 0 else 'Error: Division by zero'\n\ndef main():\n    parser = argparse.ArgumentParser(description='Python CLI Calculator')\n    parser.add_argument('operation', choices=['add', 'sub', 'mul', 'div'])\n    parser.add_argument('a', type=float)\n    parser.add_argument('b', type=float)\n    args = parser.parse_args()\n    ops = {'add': add, 'sub': subtract, 'mul': multiply, 'div': divide}\n    print(f'Result: {ops[args.operation](args.a, args.b)}')\n\nif __name__ == '__main__': main()\n",
+                        "test_calculator.py": "from calculator import add, subtract, multiply, divide\ndef test_add(): assert add(2, 3) == 5\ndef test_subtract(): assert subtract(5, 3) == 2\ndef test_multiply(): assert multiply(2, 4) == 8\ndef test_divide(): assert divide(10, 2) == 5.0\ndef test_divide_by_zero(): assert 'Error' in divide(1, 0)\n",
+                        "requirements.txt": "pytest>=8.0.0\n",
+                        "README.md": f"# {project_title}\n\nA Python CLI application built with argparse.\n\n## Usage\n```bash\npython calculator.py add 5 3\npython calculator.py div 10 2\n```\n"
                     }
                 })
             else:
