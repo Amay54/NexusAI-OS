@@ -155,7 +155,76 @@ class MockDevLLMProvider(BaseLLMProvider):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
-        logger.warning("Using MockDevLLMProvider fallback response.")
+        logger.warning("Using MockDevLLMProvider response.")
+        p_lower = prompt.lower()
+        sys_lower = (system_prompt or "").lower()
+
+        # If system prompt requests structured JSON code synthesis:
+        if "json" in sys_lower or "files" in sys_lower:
+            if "flask" in p_lower:
+                return json.dumps({
+                    "project_name": "FlaskWeatherAPI",
+                    "framework": "flask",
+                    "language": "python",
+                    "files": {
+                        "app.py": "from flask import Flask, jsonify\napp = Flask(__name__)\n@app.route('/health')\ndef health(): return jsonify({'framework': 'Flask'})\nif __name__ == '__main__': app.run()\n",
+                        "test_app.py": "from app import app\ndef test_health(): pass\n",
+                        "requirements.txt": "Flask>=3.0.0\npytest\n",
+                        "Dockerfile": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"python\", \"app.py\"]\n",
+                        "README.md": "# Flask Weather API\n"
+                    }
+                })
+            elif "react" in p_lower:
+                return json.dumps({
+                    "project_name": "ReactTodoApp",
+                    "framework": "react",
+                    "language": "javascript",
+                    "files": {
+                        "src/App.jsx": "import React from 'react'; export default function App() { return <h1>React Todo App</h1>; }",
+                        "package.json": '{\n  "name": "react-todo",\n  "dependencies": {\n    "react": "^18.2.0"\n  }\n}',
+                        "vite.config.js": "import { defineConfig } from 'vite'; export default defineConfig({});",
+                        "Dockerfile": "FROM node:20-alpine\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"npm\", \"run\", \"dev\"]\n",
+                        "README.md": "# React Todo App\n"
+                    }
+                })
+            elif "django" in p_lower:
+                return json.dumps({
+                    "project_name": "DjangoBlog",
+                    "framework": "django",
+                    "language": "python",
+                    "files": {
+                        "manage.py": "import os\nimport sys\nimport django\ndef main(): pass\nif __name__ == '__main__': main()\n",
+                        "blog/models.py": "from django.db import models\nclass Post(models.Model): pass\n",
+                        "requirements.txt": "Django>=5.0.0\n",
+                        "Dockerfile": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"python\", \"manage.py\", \"runserver\"]\n",
+                        "README.md": "# Django Blog\n"
+                    }
+                })
+            elif "cli" in p_lower:
+                return json.dumps({
+                    "project_name": "PythonCLI",
+                    "framework": "cli",
+                    "language": "python",
+                    "files": {
+                        "cli.py": "import argparse\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.parse_args()\nif __name__ == '__main__': main()\n",
+                        "requirements.txt": "pytest\n",
+                        "README.md": "# Python CLI Application\n"
+                    }
+                })
+            else:
+                return json.dumps({
+                    "project_name": "FastAPIService",
+                    "framework": "fastapi",
+                    "language": "python",
+                    "files": {
+                        "main.py": "from fastapi import FastAPI\napp = FastAPI()\n@app.get('/health')\ndef health(): return {'framework': 'FastAPI'}\n",
+                        "test_main.py": "from main import app\ndef test_health(): pass\n",
+                        "requirements.txt": "fastapi\nuvicorn\n",
+                        "Dockerfile": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"uvicorn\", \"main:app\"]\n",
+                        "README.md": "# FastAPI Service\n"
+                    }
+                })
+
         return json.dumps({
             "status": "mock_response",
             "message": f"Autonomous NexusAI OS response generated for prompt: {prompt[:50]}...",

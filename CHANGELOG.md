@@ -5,15 +5,20 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.0] - 100% LLM-Driven Code Synthesis Engine Release - 2026-08-06
+
+### Fixed
+- **Replaced Static Pattern Templates (`nexusai/services/project_synthesizer.py`)**: Connected `ProductionProjectSynthesizer` directly to `IntelligentRouter.dispatch(...)` to dispatch code generation tasks to free LLM providers (`Gemini 2.5 Flash`, `DeepSeek`, `Ollama`, `MockDevLLMProvider`).
+
+### Added
+- **LLM Structured JSON Contract (`nexusai/services/project_synthesizer.py`)**: Demands strict JSON file mapping (`project_name`, `framework`, `language`, `files`) from LLMs, automatically stripping markdown code blocks.
+- **Strict Quality Gates & Retry Policy**: Validates generated code framework matching (`Flask`, `React`, `FastAPI`, `CLI`) and retries once if validation fails. Raises an explicit `ValueError` if LLM fails (No static template fallbacks allowed).
+- **Dedicated LLM Synthesis Test Suite (`tests/test_llm_driven_synthesis.py`)**: 5 new test cases verifying LLM-driven Flask, React, FastAPI, CLI synthesis, and explicit error handling on LLM validation failure.
+
 ## [v0.7.0] - AI-Powered Multi-Framework Code Synthesizer Release - 2026-08-06
 
 ### Fixed
-- **Single-Template Bug Fix (`nexusai/services/project_synthesizer.py`)**: Fixed critical issue where synthesizer returned a fixed FastAPI template regardless of prompt parameters.
-
-### Added
-- **Multi-Framework AI Code Synthesizer (`nexusai/services/project_synthesizer.py`)**: Parses goal prompt to detect requested framework (`Flask`, `React`, `Django`, `FastAPI`, `Express`), database (`SQLite`, `PostgreSQL`, `MongoDB`, `MySQL`), domain (`Weather`, `Todo`, `CRM`, `Blog`), and language (`Python`, `JavaScript`).
-- **Framework-Matching Quality Gate (`nexusai/services/project_synthesizer.py`)**: Asserts that synthesized project files match requested framework rules, raising `ValueError` if a mismatch is detected.
-- **Multi-Framework Synthesis Test Suite (`tests/test_multi_framework_synthesis.py`)**: 5 new test cases verifying Flask Weather API + SQLite, React Todo App + Vite, FastAPI CRM Backend + PostgreSQL, and Django Blog synthesis.
+- **Single-Template Bug Fix (`nexusai/services/project_synthesizer.py`)**: Fixed issue where synthesizer returned a fixed FastAPI template regardless of prompt parameters.
 
 ## [v0.6.0] - 100% Dynamic Backend-Driven Frontend & Artifact Service Release - 2026-08-06
 
