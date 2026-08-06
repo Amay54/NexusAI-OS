@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 from nexusai.mcp.registry import tool_registry
+from nexusai.mcp.engine import discovery_engine
 from nexusai.services.knowledge_graph import knowledge_graph
 
 
@@ -25,6 +26,9 @@ class ExecutiveQualityGatesService:
 
     async def verify_pre_execution_gates(self) -> QualityGatesReport:
         """Verifies 7 pre-execution quality gates."""
+        if not tool_registry.list_tools():
+            await discovery_engine.discover_and_index_all_tools()
+
         tools_registered = len(tool_registry.list_tools()) > 0
         graph_healthy = (await knowledge_graph.get_full_graph_topology()) is not None
 

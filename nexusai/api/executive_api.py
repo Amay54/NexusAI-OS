@@ -1,9 +1,10 @@
 """
-Executive Intelligence REST API Routers for NexusAI OS (v0.3.2).
+Executive Intelligence REST API Routers for NexusAI OS (v0.3.3).
 Provides endpoints for Strategic Analysis, Pre-Execution Simulation, Executive Dashboard, and Project Health Metrics.
 """
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query, Body
+from pydantic import BaseModel, Field
 
 from nexusai.services.executive_intelligence import executive_intelligence
 from nexusai.services.project_health import project_health_service
@@ -13,17 +14,22 @@ from nexusai.services.simulation import pre_execution_simulator
 executive_router = APIRouter(prefix="/executive", tags=["Executive Intelligence Layer"])
 
 
+class StrategicAnalysisRequest(BaseModel):
+    goal_prompt: str
+    project_name: str = "StrategyProject"
+
+
 @executive_router.post("/analyze")
-async def analyze_project_strategy(goal_prompt: str = Body(...), project_name: str = Body("StrategyProject")):
+async def analyze_project_strategy(payload: StrategicAnalysisRequest):
     """Performs executive strategic analysis (Business Impact, Technical Risk, ROI, Cost)."""
-    report = await executive_intelligence.analyze_project_strategy(goal_prompt, project_name)
+    report = await executive_intelligence.analyze_project_strategy(payload.goal_prompt, payload.project_name)
     return report.model_dump()
 
 
 @executive_router.post("/simulate")
-async def run_pre_execution_simulation(goal_prompt: str = Body(...), project_name: str = Body("SimulatedProject")):
+async def run_pre_execution_simulation(payload: StrategicAnalysisRequest):
     """Simulates workflow execution before code runs to predict failures, duration, and success probability."""
-    res = await pre_execution_simulator.simulate_workflow_execution(goal_prompt, project_name)
+    res = await pre_execution_simulator.simulate_workflow_execution(payload.goal_prompt, payload.project_name)
     return res.model_dump()
 
 

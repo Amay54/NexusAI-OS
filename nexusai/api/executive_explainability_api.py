@@ -4,6 +4,7 @@ Provides endpoints for Decision Explainability, Digital Twins, What-If Simulatio
 """
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query, Body
+from pydantic import BaseModel, Field
 
 from nexusai.services.executive_explainability import executive_explainability
 from nexusai.services.digital_twin import digital_twin_engine
@@ -16,24 +17,34 @@ from nexusai.services.quality_gates import quality_gates_service
 explainability_router = APIRouter(prefix="/executive", tags=["Explainable Executive Intelligence"])
 
 
+class ExplainRequest(BaseModel):
+    decision: str
+    goal_prompt: str
+
+
+class GoalPromptRequest(BaseModel):
+    goal_prompt: str
+    project_name: str = "TwinProject"
+
+
 @explainability_router.post("/explain")
-async def get_explainable_recommendation(decision: str = Body(...), goal_prompt: str = Body(...)):
+async def get_explainable_recommendation(payload: ExplainRequest):
     """Generates evidence-backed explainable recommendation details for a decision."""
-    rec = await executive_explainability.create_explainable_recommendation(decision, goal_prompt)
+    rec = await executive_explainability.create_explainable_recommendation(payload.decision, payload.goal_prompt)
     return rec.model_dump()
 
 
 @explainability_router.post("/digital-twin")
-async def generate_project_digital_twin(goal_prompt: str = Body(...), project_name: str = Body("TwinProject")):
+async def generate_project_digital_twin(payload: GoalPromptRequest):
     """Generates virtual Project Digital Twin graph."""
-    twin = await digital_twin_engine.generate_digital_twin(goal_prompt, project_name)
+    twin = await digital_twin_engine.generate_digital_twin(payload.goal_prompt, payload.project_name)
     return twin.model_dump()
 
 
 @explainability_router.post("/what-if")
-async def run_what_if_simulation(goal_prompt: str = Body(...)):
+async def run_what_if_simulation(payload: GoalPromptRequest):
     """Executes 4-scenario What-If simulation matrix (Base vs Extra Agent vs Alt LLM vs Alt Toolchain)."""
-    report = await what_if_simulation_engine.run_what_if_analysis(goal_prompt)
+    report = await what_if_simulation_engine.run_what_if_analysis(payload.goal_prompt)
     return report.model_dump()
 
 
