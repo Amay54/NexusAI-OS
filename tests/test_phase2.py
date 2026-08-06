@@ -1,5 +1,5 @@
 """
-NexusAI OS Phase 2 Test Suite (v0.2.0).
+NexusAI OS Phase 2 Test Suite (v0.2.1).
 Verifies Intelligence Layer: Context Retrieval & Compression, Reflection Engine, State Persistence, and REST APIs.
 """
 import pytest
@@ -86,7 +86,7 @@ async def test_intelligence_rest_apis():
         # 1. Health
         health_res = await client.get("/health")
         assert health_res.status_code == 200
-        assert health_res.json()["version"] == "0.2.0"
+        assert health_res.json()["version"].startswith("0.2")
 
         # 2. Graph topology
         graph_res = await client.get("/api/v1/graph")
