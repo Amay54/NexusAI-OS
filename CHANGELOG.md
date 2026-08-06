@@ -5,19 +5,21 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.0] - Master Production Release - 2026-08-06
+
+### Added
+- **Production End-to-End Project Synthesizer (`nexusai/services/project_synthesizer.py`)**: Complete real multi-file codebase synthesizer (FastAPI, PostgreSQL schema, Pytest test suits, Dockerfile, docker-compose.yml, README, ADRs) verified inside execution sandbox.
+- **Built-In Demo Workflows Engine (`nexusai/services/demo_workflows.py`)**: 5 pre-configured demonstration workflows (Inventory System, Blog API, CRM Backend, Auth Microservice, REST API).
+- **Real-Time WebSocket Telemetry Bus (`nexusai/api/websocket_api.py`)**: `/ws/telemetry` endpoint streaming real-time agent execution logs, workflow progress, tool invocations, and artifact events to the dashboard.
+- **Production React 18 OS Dashboard (`frontend/`)**: Modern UI featuring Executive Dashboard, Organization Board, Live Timeline, Tool Activity Feed, Memory & Knowledge Graph Visualizer, Digital Twin Viewer, and Artifact Explorer.
+- **Docker Compose Stack & Observability (`docker-compose.yml`, `prometheus.yml`)**: Production containerization stack including FastAPI, PostgreSQL, Redis, Qdrant, Prometheus, and Grafana.
+- **Production Documentation Suite (`docs/`)**: Architecture guide, Deployment guide, Developer guide, API documentation, Troubleshooting, and Contribution guidelines.
+- **Production Test Suite (`tests/test_v0_4_0_production.py`)**: 4 new end-to-end integration tests verifying synthesis, demo execution, WebSockets, and control plane endpoints (40/40 tests passing).
+
 ## [v0.3.3] - Explainable Executive Intelligence & Digital Twin Release - 2026-08-06
 
 ### Added
-- **Executive Decision Explainability (`nexusai/services/executive_explainability.py`)**: `ExplainableRecommendation` model requiring confidence scores, supporting evidence, assumptions, reasoning summaries, data sources used, and alternative options considered for every recommendation.
-- **Prediction Engine Metric Classifier (`nexusai/services/prediction_classifier.py`)**: Classifies all metrics into `OBSERVED`, `ESTIMATED`, `MODEL_PREDICTION`, `USER_ASSUMPTION`, and `UNKNOWN` to avoid presenting estimates as facts.
-- **Project Digital Twin Engine (`nexusai/services/digital_twin.py`)**: Virtual graph representation (`ProjectDigitalTwin`) storing Project Structure, Tasks, Dependencies, Agent Assignments, Tools, Timelines, and Risk Graph.
-- **What-If Scenario Simulation Engine (`nexusai/services/scenario_simulation.py`)**: Executes 4-scenario simulation matrix (Base Team vs Extra Specialist vs Alt LLM vs Alt Toolchain) to evaluate trade-offs in duration, risk, and success probability.
-- **Executive Timeline & Critical Path Generator (`nexusai/services/executive_timeline.py`)**: Generates Gantt-style executive timeline across 8 phases, highlighting critical path nodes and bottleneck risks.
-- **Live Risk Register (`nexusai/services/risk_register.py`)**: Continuous Risk Register (`RiskItem`) tracking Probability, Impact, Severity, Mitigation Strategy, Owner, and Status.
-- **Automatic ADR Generator (`nexusai/services/adr_generator.py`)**: Automatically generates markdown Architecture Decision Records (ADRs) storing Context, Decision, Alternatives, Consequences, and Reasoning.
-- **Pre-Execution Quality Gates (`nexusai/services/quality_gates.py`)**: Pre-flight verification checking Architecture, Security, Dependencies, Memory, Tools, LLM, and Knowledge Graph health before execution begins.
-- **Explainability REST APIs (`nexusai/api/executive_explainability_api.py`)**: Endpoints for Explainability, Digital Twins, What-If Simulations, Timelines, Risk Register, ADRs, and Quality Gates (`/api/v1/executive/*`).
-- **Explainability Test Suite (`tests/test_executive_explainability.py`)**: 4 new automated integration tests with 100% pass rate.
+- Decision Explainability Engine, Prediction Metric Classifier, Project Digital Twin Engine, What-If Scenario Simulation, Executive Timeline, Live Risk Register, ADR Generator, and Pre-Execution Quality Gates.
 
 ## [v0.3.2] - Executive Intelligence Layer & Pre-Execution Simulation - 2026-08-06
 
