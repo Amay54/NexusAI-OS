@@ -1,6 +1,6 @@
 """
-NexusAI OS FastAPI Control Plane Entrypoint (v0.2.2).
-Registers Auth, Workflows, MCP Tools, Memory, Explainability, Knowledge Graph, Reflection, History, Snapshots, and Observability.
+NexusAI OS FastAPI Control Plane Entrypoint (v0.3.0).
+Registers Auth, Workflows, MCP Tools, Memory, Explainability, Knowledge Graph, Reflection, History, Snapshots, Observability, and Autonomous Workforce.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -12,6 +12,7 @@ from nexusai.api.intelligence import (
     observability_router, snapshot_router
 )
 from nexusai.api.mcp_api import mcp_router
+from nexusai.api.workforce_api import workforce_router
 from nexusai.mcp.engine import discovery_engine
 
 
@@ -24,8 +25,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="NexusAI OS Enterprise Control Plane & Adaptive MCP Intelligence API",
-    version="0.2.2",
+    description="NexusAI OS Enterprise Control Plane & Autonomous Workforce API",
+    version="0.3.0",
     lifespan=lifespan
 )
 
@@ -46,6 +47,7 @@ app.include_router(history_router, prefix="/api/v1")
 app.include_router(observability_router, prefix="/api/v1")
 app.include_router(snapshot_router, prefix="/api/v1")
 app.include_router(mcp_router, prefix="/api/v1")
+app.include_router(workforce_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -53,7 +55,7 @@ async def health_check():
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,
-        "version": "0.2.2",
+        "version": "0.3.0",
         "default_llm_provider": settings.DEFAULT_LLM_PROVIDER,
         "hitl_enabled": settings.ENABLE_HITL_APPROVAL
     }

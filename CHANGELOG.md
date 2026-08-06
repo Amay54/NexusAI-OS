@@ -5,18 +5,22 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.0] - Autonomous Multi-Agent Workforce Release - 2026-08-06
+
+### Added
+- **13 Autonomous Agent Personas (`nexusai/agents/personas.py`)**: Defined CEO, PM, Software Architect, Backend Engineer, Frontend Engineer, Database Engineer, QA Engineer, Security Engineer, DevOps Engineer, Documentation Engineer, Marketing Agent, Reflection Agent, and Reviewer Agent.
+- **Zero-Direct-Call Communication Architecture (`nexusai/agents/base_agent.py`)**: Agents communicate exclusively via Event Bus, Memory Engine, Knowledge Graph, and Tool Registry.
+- **LangGraph State Machine Orchestrator (`nexusai/workflows/graph_orchestrator.py`)**: Manages event flow, parallel engineering execution (Database, Backend, Frontend), audit nodes (QA, Security), DevOps HITL checkpoints, and reflection/review validations.
+- **Multi-Agent Consensus & Voting Engine (`nexusai/services/consensus.py`)**: Majority voting, confidence-weighted voting, and conflict resolution across agents.
+- **Human-in-the-Loop (HITL) Checkpoints (`nexusai/services/hitl.py`)**: Pauses workflows before deployments, DB migrations, or dangerous operations.
+- **End-to-End Project Synthesizer (`nexusai/services/project_synthesizer.py`)**: Decomposes user goals (e.g. *"Build a FastAPI inventory management system"*), generates multi-file codebases, runs unit tests inside Code Sandbox Engine, generates Dockerfiles and docs.
+- **Workforce REST APIs (`nexusai/api/workforce_api.py`)**: Endpoints for org chart, agent capabilities, workflow execution, live state tracking, HITL approvals, consensus evaluation, and project synthesis (`/api/v1/workforce/*`).
+- **Phase 3 Workforce Test Suite (`tests/test_phase3_workforce.py`)**: 6 new integration tests verifying complete software project generation, parallel execution, voting, HITL approvals, and REST APIs.
+
 ## [v0.2.2] - Adaptive MCP Ecosystem & Dynamic Tool Intelligence - 2026-08-06
 
 ### Added
-- **Dynamic Tool Knowledge Base (`nexusai/mcp/registry.py`)**: `ToolMetadata` storing tool IDs, descriptions, parameters, permissions, risk levels, vector embeddings, and real-time reliability scores.
-- **Adaptive Tool Discovery Engine (`nexusai/mcp/engine.py`)**: Automatically scans MCP servers and plugin manifests, generates embeddings via `embedding_service`, and registers capabilities into ToolRegistry without manual code edits.
-- **Tool Reasoning Engine (`nexusai/mcp/reasoning.py`)**: Evaluates agent prompts against Tool KB using semantic vector matching, agent support checks, and reliability scores.
-- **Tool Learning & Self-Healing Engine (`nexusai/mcp/learning.py`)**: Tracks invocation latency and success/failure rates, dynamically updates reliability scores, and executes automated retries and provider failovers.
-- **Multi-Tool Planning Engine (`nexusai/mcp/planner.py`)**: Orchestrates Single, Parallel (`asyncio.gather`), Sequential, Conditional, and Fallback tool execution plans.
-- **Dynamic Plugin Marketplace Loader (`nexusai/mcp/plugins.py`)**: Automatically discovers plugins dropped into `plugins/` folder.
-- **Adaptive MCP REST APIs (`nexusai/api/mcp_api.py`)**: Endpoints for tool listing, details, discovery, catalog, task evaluation, metrics, and multi-tool plan execution.
-- **Adaptive MCP Test Suite (`tests/test_mcp_adaptive.py`)**: 5 new automated tests with 100% pass rate.
-- **Tool Catalog Documentation (`docs/mcp/tool_catalog.md`)**: Automatically generated catalog and capability matrix.
+- Dynamic Tool Knowledge Base, Adaptive Tool Discovery Engine, Tool Reasoning Engine, Tool Learning & Self-Healing Engine, Multi-Tool Planner, and Plugin Marketplace Loader.
 
 ## [v0.2.1] - Enterprise Intelligence Architecture Upgrade - 2026-08-06
 
