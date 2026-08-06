@@ -5,17 +5,24 @@ All notable changes to the NexusAI OS platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.1] - Adaptive AI Organization Upgrade - 2026-08-06
+
+### Added
+- **Dynamic Organization Engine (`nexusai/workflows/dynamic_org.py`)**: CEO Agent dynamically determines required agents, parallel execution branches, skipped unnecessary roles, and required specialists based on goal complexity (Simple TODO vs Enterprise SaaS).
+- **Ephemeral Specialist Agent Spawner (`nexusai/agents/spawner.py`)**: Dynamically spawns temporary specialist personas (`OAuth Specialist`, `Docker Specialist`, `React Specialist`, `PostgreSQL Specialist`, `Kubernetes Specialist`) and auto-terminates them upon task completion.
+- **Agent Resource Manager (`nexusai/agents/resource_manager.py`)**: Tracks CPU/Memory utilization, task queue size, workload, and Busy/Idle states to optimize task assignment.
+- **Agent Skill Profiles & Metrics (`nexusai/agents/skill_profiles.py`)**: Tracks domain experience, success rates, average execution times, preferred tools/LLMs, failure histories, and confidence scores.
+- **Cross-Agent Collaboration Engine (`nexusai/agents/collaboration.py`)**: Facilitates peer reviews, pair programming, mentor agent consultations, and help requests.
+- **Negotiation & Debate Engine (`nexusai/services/negotiation.py`)**: Coordinates multi-agent debates, confidence-weighted voting, conflict resolution, and automatic HITL escalation.
+- **Autonomous Replanning Engine (`nexusai/workflows/replanning.py`)**: Catches agent failures, spawns specialist recovery agents, switches tools/LLMs, and retries workflows dynamically.
+- **Company Learning Loop (`nexusai/services/company_learning.py`)**: Updates tool/agent rankings, planning quality estimates, and failure prediction metrics after every workflow run.
+- **Adaptive Org REST APIs (`nexusai/api/dynamic_org_api.py`)**: Endpoints for dynamic org planning, resource metrics, skill profiles, specialist spawning, agent debates, and failure replanning (`/api/v1/org/*`).
+- **Dynamic Org Test Suite (`tests/test_dynamic_org.py`)**: 5 new automated integration tests with 100% pass rate.
+
 ## [v0.3.0] - Autonomous Multi-Agent Workforce Release - 2026-08-06
 
 ### Added
-- **13 Autonomous Agent Personas (`nexusai/agents/personas.py`)**: Defined CEO, PM, Software Architect, Backend Engineer, Frontend Engineer, Database Engineer, QA Engineer, Security Engineer, DevOps Engineer, Documentation Engineer, Marketing Agent, Reflection Agent, and Reviewer Agent.
-- **Zero-Direct-Call Communication Architecture (`nexusai/agents/base_agent.py`)**: Agents communicate exclusively via Event Bus, Memory Engine, Knowledge Graph, and Tool Registry.
-- **LangGraph State Machine Orchestrator (`nexusai/workflows/graph_orchestrator.py`)**: Manages event flow, parallel engineering execution (Database, Backend, Frontend), audit nodes (QA, Security), DevOps HITL checkpoints, and reflection/review validations.
-- **Multi-Agent Consensus & Voting Engine (`nexusai/services/consensus.py`)**: Majority voting, confidence-weighted voting, and conflict resolution across agents.
-- **Human-in-the-Loop (HITL) Checkpoints (`nexusai/services/hitl.py`)**: Pauses workflows before deployments, DB migrations, or dangerous operations.
-- **End-to-End Project Synthesizer (`nexusai/services/project_synthesizer.py`)**: Decomposes user goals (e.g. *"Build a FastAPI inventory management system"*), generates multi-file codebases, runs unit tests inside Code Sandbox Engine, generates Dockerfiles and docs.
-- **Workforce REST APIs (`nexusai/api/workforce_api.py`)**: Endpoints for org chart, agent capabilities, workflow execution, live state tracking, HITL approvals, consensus evaluation, and project synthesis (`/api/v1/workforce/*`).
-- **Phase 3 Workforce Test Suite (`tests/test_phase3_workforce.py`)**: 6 new integration tests verifying complete software project generation, parallel execution, voting, HITL approvals, and REST APIs.
+- Defined 13 Specialized Agent Personas, LangGraph State Machine, Consensus Voting Engine, HITL Safety Checkpoints, and End-to-End Project Synthesizer.
 
 ## [v0.2.2] - Adaptive MCP Ecosystem & Dynamic Tool Intelligence - 2026-08-06
 
