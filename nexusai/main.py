@@ -1,12 +1,13 @@
 """
 NexusAI OS FastAPI Production Control Plane Entrypoint (v0.5.0 Public Release).
 Registers Auth, Workflows, MCP Tools, Memory, Explainability, Knowledge Graph, Reflection, History, Snapshots, Observability,
-Workforce, Dynamic Org, Executive Intelligence, WebSockets Telemetry, and Built-In Demo Workflows.
+Workforce, Dynamic Org, Executive Intelligence, WebSockets Telemetry, Built-In Demo Workflows, and Hosts the Production React OS Dashboard.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 
 from nexusai.core.config import settings
@@ -72,3 +73,12 @@ async def health_check():
         "default_llm_provider": settings.DEFAULT_LLM_PROVIDER,
         "hitl_enabled": settings.ENABLE_HITL_APPROVAL
     }
+
+# Mount React 18 OS Dashboard Static Assets
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="static_assets")
+
+    @app.get("/")
+    async def serve_dashboard():
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
